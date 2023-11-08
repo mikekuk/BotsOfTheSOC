@@ -12,7 +12,7 @@ load_dotenv(".env")
 service = connect(
     host="localhost",
     port="8089",
-    username="admin",
+    username=os.getenv('SPLUNK_UN'),
     password=os.getenv('SPLUNK_PW')
 )
 
