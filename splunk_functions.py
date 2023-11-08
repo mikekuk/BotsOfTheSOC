@@ -17,7 +17,7 @@ service = connect(
 )
 
 
-def splunk_query(query, earliest_time="-24h@h", latest_time="now", dataframe=False, splunk_service=service):
+def splunk_query(query, earliest_time="2017-07-31T20:15:00.000+00:00", latest_time="2017-08-31T18:00:00.000+00:00", dataframe=False, splunk_service=service):
     """
     Execute a Splunk query and return the results as a pandas DataFrame.
 
