@@ -1,0 +1,8 @@
+OAI_CONFIG_LIST
+.cache/
+bots/
+coding/
+.env
+data/
+debug.ipynb
+__pycache__
