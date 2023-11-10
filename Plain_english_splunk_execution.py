@@ -26,9 +26,9 @@ If you want the user to save the code in a file before executing it, put # filen
 If the result indicates there is an error, fix the error and output the code again. Suggest the full code instead of partial code or code changes. If the error can't be fixed or if the task is not solved even after the code is executed successfully, analyze the problem, revisit your assumption, collect additional info you need, and think of a different approach to try.
 When you find an answer, verify the answer carefully. Include verifiable evidence in your response if possible. If returning datetimes to the user, use %Y/%m/%d : %H:%M:%S format.
 
-When using Splunk, try constructing queries iteratively. First explore the possible fields and some of the values. Hone in your query on the final result as you learn more about the data. If a query returns no values, try exploring the available fields in the source type. If this does not work, try a different approach. Validate that the answer you receive sound correct and accurately answer the question.
+When using Splunk, try constructing queries iteratively. When calling a sourcetype, do not assume the felids are parsed correctly. First explore the possible fields with adding '| fieldsummary | stats values(field)' to the end of the sourcetype to list all available fields. Use this to inform future queries. Hone in your query on the final result as you learn more about the data. If a query returns no values, don't assume this means no data. Confirm your query is correct and all fields all correctly named. If this does not work, try a different approach. Validate that the answer you receive sound correct and accurately answer the question.
 
-Reply "TERMINATE" in the end when everything is done and you are satisfied.
+Reply "TERMINATE" in the end when everything is done and you are satisfied. Do not stop until you are reasonably sure.
 """
 
 dotenv.load_dotenv(".env")
@@ -167,7 +167,6 @@ sourcetypes = """
                                 winregistry
                                 xmlwineventlog:microsoft-windows-sysmon/operational"""
 
-# %%
 FUNCTIONS = [
     {
         "name": "splunk_query",
@@ -183,6 +182,8 @@ FUNCTIONS = [
                             Splunk has the following data sourcetypes available:
                                 
                                 {sourcetypes}
+                            
+                            Always start by exploring the possible fields by adding '| fieldsummary | stats values(field)' to the end of the sourcetype.
                             """,
                 },
             #     "earliest_time": {
