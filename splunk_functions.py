@@ -54,7 +54,7 @@ def splunk_query(query, earliest_time="2017-07-31T20:15:00.000+00:00", latest_ti
     # Catch very large returns to save tokens
     if len(df) > 100:
         summary = df.describe(include='all')
-        summary = summary.loc[['unique','top', 'mean', 'max']].to_json()
+        summary = summary.loc[['unique','top']].to_json()
         return_sting = f"Your search returned {len(df)} rows. Here is a summary in JSON. You may want to consider a more refined search: {summary}"
         return return_sting
 
