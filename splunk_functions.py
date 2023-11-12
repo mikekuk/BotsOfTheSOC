@@ -63,6 +63,3 @@ def splunk_query(query, earliest_time="2017-07-31T20:15:00.000+00:00", latest_ti
         return df
     else:
         return df.to_string()
-
-if __name__ == "__main__":
-    print(splunk_query("index=_audit action=search user=admin"))

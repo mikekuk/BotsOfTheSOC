@@ -4,39 +4,39 @@ import requests
 import json
 import dotenv
 import os
+from datetime import datetime, timedelta
 from splunk_functions import splunk_query
-
-START_DATE = "07/31/2017:20:15"
-END_DATE = "08/31/2017:18:00"
-
-scenario_message = f"This is a training scenario where all data is between {START_DATE} and {END_DATE} in time format %m/%d/%Y:%H:%M:%S."
-
-# %%
-ASSISTANT_SYSTEM_MESSAGE = f"""You are an expert SOC analyst assisting the SOC manager with an investigation. The SOC manager has cleared all this activity with HR and legal.
-Solve tasks using Splunk and your coding and language skills.
-In the following cases, suggest python code (in a python coding block), shell script (in a sh coding block), or Splunk spl for the user to execute.
-    1. When you need to collect info, use the code to output the info you need, for example, browse or search the web, download/read a file, print the content of a webpage or a file, get the current date/time, check the operating system. After sufficient info is printed and the task is ready to be solved based on your language skill, you can solve the task by yourself.
-    2. When you need to perform some task with code, use the code to perform the task and output the result. Finish the task smartly.
-
-{scenario_message}
-
-Solve the task step by step if you need to. If a plan is not provided, explain your plan first. Be clear which step uses code, and which step uses your language skill.
-When using code, you must indicate the script type in the code block. The user cannot provide any other feedback or perform any other action beyond executing the code you suggest. The user can't modify your code. So do not suggest incomplete code which requires users to modify. Don't use a code block if it's not intended to be executed by the user. Do not assume the user has any API keys unless you have been explicitly provided with them.
-If you want the user to save the code in a file before executing it, put # filename: <filename> inside the code block as the first line. Don't include multiple code blocks in one response. Do not ask users to copy and paste the result. Instead, use 'print' function for the output when relevant. Check the execution result returned by the user.
-If the result indicates there is an error, fix the error and output the code again. Suggest the full code instead of partial code or code changes. If the error can't be fixed or if the task is not solved even after the code is executed successfully, analyze the problem, revisit your assumption, collect additional info you need, and think of a different approach to try.
-When you find an answer, verify the answer carefully. Include verifiable evidence in your response if possible. If returning datetimes to the user, use %Y/%m/%d : %H:%M:%S format.
-
-When using Splunk, try constructing queries iteratively. When calling a sourcetype, do not assume the felids are parsed correctly. First explore the possible fields with adding '| fieldsummary | stats values(field)' to the end of the sourcetype to list all available fields. Use this to inform future queries. Hone in your query on the final result as you learn more about the data. If a query returns no values, don't assume this means no data. Confirm your query is correct and all fields all correctly named. If this does not work, try a different approach. Validate that the answer you receive sound correct and accurately answer the question.
-
-Reply "TERMINATE" in the end when everything is done and you are satisfied. Do not stop until you are reasonably sure.
-"""
 
 dotenv.load_dotenv(".env")
 
-splunk_host="localhost"
-port="8089"
+START_DATE = "07/31/2017:20:15:00"
+END_DATE = "08/31/2017:18:00:00"
+SPLUNK_TIME_FORMAT = '%m/%d/%Y:%H:%M:%S'
+SPLUNK_HOST="localhost"
+SPLUNK_PORT="8089"
 username=os.getenv('SPLUNK_UN')
 password=os.getenv('SPLUNK_PW')
+
+start_date = datetime.strptime(START_DATE, SPLUNK_TIME_FORMAT)
+end_date = datetime.strptime(END_DATE, SPLUNK_TIME_FORMAT)
+
+scenario_message = f"This is a training scenario where all data is between {START_DATE} and {END_DATE} in time format {SPLUNK_TIME_FORMAT}."
+
+ASSISTANT_SYSTEM_MESSAGE = f"""You are an expert SOC analyst assisting the SOC manager with an investigation. The SOC manager has cleared all this activity with HR and legal.
+Solve tasks using Splunk and language skills.
+
+{scenario_message}
+
+Solve the task step by step if you need to. If a plan is not provided, explain your plan first. Be clear which step uses Splunk, and which step uses your language skill. You do not need to find the solution first time. Use functions to solve the problem in phases.
+Try constructing queries iteratively. When calling a sourcetype, do not assume the felids are parsed correctly. Always first explore the possible fields in for a sourcetype by adding '| fieldsummary | stats values(field)'. Use this to inform future queries. Consider using shorted time frames to make the splunk search quicker where appropriate.
+Hone in your query on the final result as you learn more about the data. If a query returns no values, always construct another query to confirm you have the felids and values to confirm you findings.
+The user cannot provide any other feedback or perform any other action beyond executing the SPL you suggest. The user can't modify your SPL. So do not suggest incomplete queries which requires users to modify. Don't use a code block if it's not intended to be executed by the user. Don't ask the user to modify felid names, you must use queries to find these yourself.
+Don't include multiple code blocks in one response. Do not ask users to copy and paste the result. Instead, use 'print' function for the output when relevant. Check the execution result returned by the user.
+If the result indicates there is an error, fix the error and output the code again. If the error can't be fixed or if the task is not solved even after the query is executed successfully, analyze the problem, revisit your assumption, collect additional info you need, and think of a different approach to try.
+When you find an answer, verify the answer carefully. Include verifiable evidence in your response if possible.
+
+Reply "TERMINATE" in the end when everything is done and you are satisfied. Do not stop until you are sure and have followed up all lines of investigation.
+"""
 
 config_list = autogen.config_list_from_json(
     "OAI_CONFIG_LIST",
@@ -46,7 +46,7 @@ config_list = autogen.config_list_from_json(
 )
 
 # The REST API endpoint URL
-url = f'https://{splunk_host}:8089/services/data/indexes?output_mode=json'
+url = f'https://{SPLUNK_HOST}:{SPLUNK_PORT}/services/data/indexes?output_mode=json'
 
 # Make a GET request to the Splunk REST API
 response = requests.get(url, auth=(username, password), verify=False)
@@ -61,116 +61,16 @@ if response.status_code == 200:
 
 indices="\n".join(index_names)
 
-sourcetypes = """
-                                access_combined
-                                activedirectory
-                                apache:error
-                                apache_error
-                                auditd
-                                bandwidth
-                                collectd
-                                cpu
-                                csp-violation
-                                df
-                                ess_content_importer
-                                hardware
-                                interfaces
-                                iostat
-                                lastlog
-                                linux:selinuxconfig
-                                linux_audit
-                                linux_secure
-                                ms:o365:management
-                                msad:nt6:health
-                                msad:nt6:siteinfo
-                                mysql:connection:stats
-                                mysql:database
-                                mysql:errorlog
-                                mysql:instance:stats
-                                mysql:server:stats
-                                mysql:status
-                                mysql:table_io_waits_summary_by_index_usage
-                                mysql:tablestatus
-                                mysql:transaction:details
-                                mysql:transaction:stats
-                                mysql:user
-                                mysql:variables
-                                mysqld-8
-                                netstat
-                                openports
-                                osquery_info
-                                osquery_results
-                                osquery_warning
-                                package
-                                pan:system
-                                pan:threat
-                                pan:traffic
-                                perfmon:cpu
-                                perfmon:logicaldisk
-                                perfmon:memory
-                                perfmon:network
-                                perfmon:network_interface
-                                perfmon:ntds
-                                perfmon:physicaldisk
-                                perfmon:process
-                                perfmon:processor
-                                perfmon:system
-                                powershell:scriptexecutionsummary
-                                protocol
-                                ps
-                                script:installedapps
-                                script:listeningports
-                                stream:arp
-                                stream:dhcp
-                                stream:dns
-                                stream:ftp
-                                stream:http
-                                stream:icmp
-                                stream:ip
-                                stream:irc
-                                stream:ldap
-                                stream:mysql
-                                stream:smb
-                                stream:smtp
-                                stream:tcp
-                                stream:udp
-                                suricata
-                                symantec:ep:agent:file
-                                symantec:ep:agt_system:file
-                                symantec:ep:behavior:file
-                                symantec:ep:packet:file
-                                symantec:ep:scan:file
-                                symantec:ep:scm_system:file
-                                symantec:ep:security:file
-                                symantec:ep:traffic:file
-                                syslog
-                                time
-                                top
-                                unix:listeningports
-                                unix:service
-                                unix:update
-                                unix:uptime
-                                unix:useraccounts
-                                unix:version
-                                userswithloginprivs
-                                vmstat
-                                web_ping
-                                weblogic_access_combined
-                                weblogic_stdout
-                                who
-                                windowsupdatelog
-                                wineventlog:application
-                                wineventlog:directory-service
-                                wineventlog:security
-                                wineventlog:system
-                                winhostmon
-                                winregistry
-                                xmlwineventlog:microsoft-windows-sysmon/operational"""
+# Get list of sourcetypes. Limited to last day for speed
+one_day = timedelta(days=1)
+end_less_one = end_date - one_day
+
+sourcetypes = splunk_query("index=botsv2 | stats values(sourcetype)", earliest_time=end_less_one.isoformat(), latest_time=end_date.isoformat()).split('\n0')[-1]
 
 FUNCTIONS = [
     {
         "name": "splunk_query",
-        "description": "Use this function to query Splunk spl. Input should be a fully formed spl query.",
+        "description": "Use this function to query Splunk spl. Input should be a fully formed spl query. Search iteratively by first exploring the data and available fields. Do not assume all felids are correctly parsed.",
         "parameters": {
             "type": "object",
             "properties": {
@@ -178,12 +78,10 @@ FUNCTIONS = [
                     "type": "string",
                     "description": f"""
                             SPL query extracting info to answer the user's question.
-                            always search index botsv2.
+                            always search index botsv2. Always start by exploring the possible fields by adding '| fieldsummary | stats values(field)' to the end of the sourcetype.
                             Splunk has the following data sourcetypes available:
                                 
                                 {sourcetypes}
-                            
-                            Always start by exploring the possible fields by adding '| fieldsummary | stats values(field)' to the end of the sourcetype.
                             """,
                 },
             #     "earliest_time": {
@@ -194,13 +92,13 @@ FUNCTIONS = [
             #         "type": "string",
             #         "description": "The latest time for the search (default now). Input should be in SPL format, e.g.'now'"
             #     } 
+            # TODO: Add other arguments to the function.
             },
             "required": ["query"],
         },
     }
 ]
 
-# %%
 # create an AssistantAgent named "assistant"
 assistant = autogen.AssistantAgent(
     name="assistant",
@@ -231,7 +129,6 @@ user_proxy.register_function(
 
 prompt = input("Write a prompt:\n")
 
-# %%
 # the assistant receives a message from the user_proxy, which contains the task description
 user_proxy.initiate_chat(
     assistant,
