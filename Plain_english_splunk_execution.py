@@ -1,12 +1,8 @@
-# %%
 import autogen
-import requests
-import json
 import dotenv
 import os
-from datetime import datetime, timedelta
-from splunk_functions import splunk_query
-from sourcetypes import sourcetypes
+from datetime import datetime
+from splunk_functions import splunk_query, get_fields, get_sourcetypes
 
 dotenv.load_dotenv(".env")
 
@@ -29,7 +25,7 @@ Solve tasks using Splunk and language skills.
 {scenario_message}
 
 Solve the task step by step if you need to. If a plan is not provided, explain your plan first. Be clear which step uses Splunk, and which step uses your language skill. You do not need to find the solution first time. Use functions to solve the problem in phases.
-Try constructing queries iteratively. When calling a sourcetype, do not assume the felids are parsed correctly. Always first explore the possible fields in for a sourcetype by adding '| fieldsummary | stats values(field)'. Use this to inform future queries. Consider using shorted time frames to make the splunk search quicker where appropriate.
+Try constructing queries iteratively. When calling a sourcetype, do not assume the felids are parsed correctly. Always first explore the possible fields in for a sourcetype with the get_fields function. Use this to inform future queries. Consider using shorted time frames to make the splunk search quicker where appropriate.
 Hone in your query on the final result as you learn more about the data. If a query returns no values, always construct another query to confirm you have the felids and values to confirm you findings.
 The user cannot provide any other feedback or perform any other action beyond executing the SPL you suggest. The user can't modify your SPL. So do not suggest incomplete queries which requires users to modify. Don't use a code block if it's not intended to be executed by the user. Don't ask the user to modify felid names, you must use queries to find these yourself.
 Don't include multiple code blocks in one response. Do not ask users to copy and paste the result. Instead, use 'print' function for the output when relevant. Check the execution result returned by the user.
@@ -46,22 +42,8 @@ config_list = autogen.config_list_from_json(
     },
 )
 
-# The REST API endpoint URL
-url = f'https://{SPLUNK_HOST}:{SPLUNK_PORT}/services/data/indexes?output_mode=json'
 
-# Make a GET request to the Splunk REST API
-response = requests.get(url, auth=(username, password), verify=False)
-
-# Check if the request was successful
-if response.status_code == 200:
-    # Parse the JSON response
-    data = response.json()
-    
-    # Extract the index names
-    index_names = [entry['name'] for entry in data['entry']]
-
-indices="\n".join(index_names)
-
+sourcetypes = "\n".join(get_sourcetypes())
 
 FUNCTIONS = [
     {
@@ -74,7 +56,7 @@ FUNCTIONS = [
                     "type": "string",
                     "description": f"""
                             SPL query extracting info to answer the user's question.
-                            Always search index botsv2 and always start by exploring the possible fields by adding '| fieldsummary | stats values(field)' to the end of the sourcetype.
+                            Always search index botsv2. When first using a sourcetype, always start by exploring the possible fields with the get_fields function.
                             Splunk has the following data sourcetypes available:
                                 
                                 {sourcetypes}
@@ -88,11 +70,24 @@ FUNCTIONS = [
                     "type": "string",
                     "description": "The latest time for the search. Input should be in ISO datetime format."
                 } 
-            # TODO: Add other arguments to the function.
             },
             "required": ["query"],
         },
-    }
+    },
+    {
+        "name": "get_fields",
+        "description": "Returns a list of all the fields names available in a sourcetype.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "sourcetype": {
+                    "type": "string",
+                    "description": "The name of the sourcetype.",
+                },
+            },
+            "required": ["sourcetype"],
+        },
+    },
 ]
 llm_config={
     "seed": 42,  # seed for caching and reproducibility
@@ -115,7 +110,8 @@ user_proxy = autogen.UserProxyAgent(
 
 user_proxy.register_function(
     function_map={
-        'splunk_query': splunk_query
+        'splunk_query': splunk_query,
+        "get_fields": get_fields
     }
 )
 
@@ -154,7 +150,5 @@ user_proxy.initiate_chat(
     splunker,
     message=prompt,
 )
-
-# print(assistant.last_message()['content'])
 
 

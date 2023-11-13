@@ -4,6 +4,10 @@ from splunklib.results import ResultsReader
 import io
 from dotenv import load_dotenv
 import os
+import json
+
+
+INDEX = "botsv2"
 
 load_dotenv(".env")
 
@@ -63,3 +67,15 @@ def splunk_query(query, earliest_time="2017-07-31T20:15:00.000+00:00", latest_ti
         return df
     else:
         return df.to_string()
+
+with open(f"{INDEX}_splunk_field.json", "r") as f:
+    raw_json = f.read()
+
+fields_dict= json.loads(raw_json)
+
+
+def get_sourcetypes():
+    return list(fields_dict.keys())
+
+def get_fields(sourcetype):
+    return fields_dict['stream:http']
