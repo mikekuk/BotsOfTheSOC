@@ -6,6 +6,7 @@ import dotenv
 import os
 from datetime import datetime, timedelta
 from splunk_functions import splunk_query
+from sourcetypes import sourcetypes
 
 dotenv.load_dotenv(".env")
 
@@ -41,7 +42,7 @@ Reply "TERMINATE" in the end when everything is done and you are satisfied. Do n
 config_list = autogen.config_list_from_json(
     "OAI_CONFIG_LIST",
     filter_dict={
-        "model": ["gpt-4", "gpt-4-0314", "gpt4", "gpt-4-32k", "gpt-4-32k-0314", "gpt-4-32k-v0314"],
+        "model": ["gpt-4-1106-preview", "gpt-4", "gpt-4-0314", "gpt4", "gpt-4-32k", "gpt-4-32k-0314", "gpt-4-32k-v0314"],
     },
 )
 
@@ -61,11 +62,6 @@ if response.status_code == 200:
 
 indices="\n".join(index_names)
 
-# Get list of sourcetypes. Limited to last day for speed
-one_day = timedelta(days=1)
-end_less_one = end_date - one_day
-
-sourcetypes = splunk_query("index=botsv2 | stats values(sourcetype)", earliest_time=end_less_one.isoformat(), latest_time=end_date.isoformat()).split('\n0')[-1]
 
 FUNCTIONS = [
     {
@@ -78,37 +74,31 @@ FUNCTIONS = [
                     "type": "string",
                     "description": f"""
                             SPL query extracting info to answer the user's question.
-                            always search index botsv2. Always start by exploring the possible fields by adding '| fieldsummary | stats values(field)' to the end of the sourcetype.
+                            Always search index botsv2 and always start by exploring the possible fields by adding '| fieldsummary | stats values(field)' to the end of the sourcetype.
                             Splunk has the following data sourcetypes available:
                                 
                                 {sourcetypes}
                             """,
                 },
-            #     "earliest_time": {
-            #         "type": "string",
-            #         "description": "The earliest time for the search (default last 24 hours). Input should be in SPL format, e.g. '-24h@h'"
-            #     },
-            #    "latest_time": {
-            #         "type": "string",
-            #         "description": "The latest time for the search (default now). Input should be in SPL format, e.g.'now'"
-            #     } 
+                "earliest_time": {
+                    "type": "string",
+                    "description": "The earliest time for the search. Input should be in ISO datetime format."
+                },
+               "latest_time": {
+                    "type": "string",
+                    "description": "The latest time for the search. Input should be in ISO datetime format."
+                } 
             # TODO: Add other arguments to the function.
             },
             "required": ["query"],
         },
     }
 ]
+llm_config={
+    "seed": 42,  # seed for caching and reproducibility
+    "config_list": config_list,  # a list of OpenAI API configuration
+}
 
-# create an AssistantAgent named "assistant"
-assistant = autogen.AssistantAgent(
-    name="assistant",
-    system_message=ASSISTANT_SYSTEM_MESSAGE,
-    llm_config={
-        "seed": 42,  # seed for caching and reproducibility
-        "config_list": config_list,  # a list of OpenAI API configuration
-        "functions": FUNCTIONS
-    },  # configuration for autogen's enhanced inference API which is compatible with OpenAI API
-)
 # create a UserProxyAgent instance named "user_proxy"
 user_proxy = autogen.UserProxyAgent(
     name="user_proxy",
@@ -119,6 +109,8 @@ user_proxy = autogen.UserProxyAgent(
         "work_dir": "coding",
         "use_docker": False,  # set to True or image name like "python:3" to use docker
     },
+    llm_config=llm_config,
+    system_message="Sense check the other agent and call out its mistakes and errors as well as executing the Splunk SPL"
 )
 
 user_proxy.register_function(
@@ -127,11 +119,39 @@ user_proxy.register_function(
     }
 )
 
+# create an AssistantAgent named "splunker"
+splunker = autogen.AssistantAgent(
+    name="Splunk_analyst",
+    system_message=ASSISTANT_SYSTEM_MESSAGE,
+    llm_config={
+        "seed": 42,  # seed for caching and reproducibility
+        "config_list": config_list,  # a list of OpenAI API configuration
+        "functions": FUNCTIONS,
+    },  # configuration for autogen's enhanced inference API which is compatible with OpenAI API
+)
+
+# PLANNER_SYSTEM_MESSAGE ="""
+# `A Planning agent that directs various SOC analyst agents. The agents have access to Splunk to find data."
+# Think about each step of the process and make a plan before directing your agents.
+# Break down the task into small steps.
+# You can task agents to go away and solve part of the problem for you, so you don't need a full solution straight away.
+# """
+
+# pm = autogen.AssistantAgent(
+#     name="Planner",
+#     system_message= PLANNER_SYSTEM_MESSAGE,
+#     llm_config=llm_config
+# )
+
+
+# groupchat = autogen.GroupChat(agents=[user_proxy, splunker, pm], messages=[], max_round=12)
+# manager = autogen.GroupChatManager(groupchat=groupchat, llm_config=llm_config)`
+
 prompt = input("Write a prompt:\n")
 
 # the assistant receives a message from the user_proxy, which contains the task description
 user_proxy.initiate_chat(
-    assistant,
+    splunker,
     message=prompt,
 )
 
