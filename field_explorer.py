@@ -24,7 +24,7 @@ start_date = datetime.strptime(START_DATE, SPLUNK_TIME_FORMAT)
 end_date = datetime.strptime(END_DATE, SPLUNK_TIME_FORMAT)
 
 # Get list of sourcetypes. Limited to last day for speed
-one_day = timedelta(days=1)
+one_day = timedelta(days=7)
 end_less_one = end_date - one_day
 
 # %%
@@ -58,7 +58,7 @@ splunk_data_dict = {}
 
 # %%
 for sourcetype in tqdm(source_types_list):
-    fields = splunk_query(f"index={index} sourcetype={sourcetype}| fieldsummary | stats values(field)", earliest_time=end_less_one.isoformat(), latest_time=end_date.isoformat())
+    fields = splunk_query(f"index={index} sourcetype={sourcetype}| fieldsummary | stats values(field)")
     fields_list = [x for x in fields.split(" ") if x != ""][1:]
     splunk_data_dict[sourcetype] = fields_list
 

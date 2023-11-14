@@ -78,4 +78,4 @@ def get_sourcetypes():
     return list(fields_dict.keys())
 
 def get_fields(sourcetype):
-    return fields_dict['stream:http']
+    return fields_dict[sourcetype]
