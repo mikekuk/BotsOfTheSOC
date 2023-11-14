@@ -28,8 +28,8 @@ def splunk_query(query, earliest_time="2017-07-31T20:15:00.000+00:00", latest_ti
     Parameters:
     - splunk_service: The authenticated Splunk service connection.
     - query: The Splunk search query string.
-    - earliest_time: The earliest time for the search (default last 24 hours).
-    - latest_time: The latest time for the search (default now).
+    - earliest_time: The earliest time for the search.
+    - latest_time: The latest time for the search.
 
     Returns:
     - df: pandas DataFrame containing the results of the query.
@@ -59,7 +59,7 @@ def splunk_query(query, earliest_time="2017-07-31T20:15:00.000+00:00", latest_ti
     if len(df) > 100:
         summary = df.describe(include='all')
         summary = summary.loc[['unique','top']].to_json()
-        return_sting = f"Your search returned {len(df)} rows. Here is a summary in JSON. You may want to consider a more refined search: {summary}"
+        return_sting = f"Your search returned {len(df)} rows. Consider a more refined search. Here is a summary in JSON: \n{summary} and the first ten rows:\n {df.loc[:10].to_string()}"
         return return_sting
 
     if dataframe:
