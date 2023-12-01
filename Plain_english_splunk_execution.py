@@ -24,7 +24,7 @@ Solve tasks using Splunk and language skills.
 
 {scenario_message}
 
-Solve the task step by step if you need to. If a plan is not provided, explain your plan first. Be clear which step uses Splunk, and which step uses your language skill. You do not need to find the solution first time. Use functions to solve the problem in phases.
+Solve the task step by step. Always produce a plan and explain your reasoning before calling a function.  Be clear which step uses Splunk, and which step uses your language skill. You do not need to find the solution first time. Use functions to solve the problem in phases.
 Try constructing queries iteratively. Before calling a sourcetype in Splunk, do not assume the felids are always parsed correctly. First explore the possible fields in for a sourcetype with the get_fields function. Use this to inform future queries. Consider using shorter time frames to make the splunk search quicker where appropriate.
 Hone in your query on the final result as you learn more about the data. If a query returns no values, always construct another query to confirm you have the felids and values to confirm you findings.
 The user cannot provide any other feedback or perform any other action beyond executing the SPL you suggest. The user can't modify your SPL. So do not suggest incomplete queries which requires users to modify. Don't use a code block if it's not intended to be executed by the user. Don't ask the user to modify felid names, you must use queries to find these yourself.
@@ -35,14 +35,24 @@ When you find an answer, verify the answer carefully. Include verifiable evidenc
 Reply "TERMINATE" in the end when everything is done and you are satisfied. Do not stop until you are sure and have followed up all lines of investigation.
 """
 
+PLANNER_SYSTEM_MESSAGE =f"""
+A Planning agent that directs a SOC analyst agent. The agent has access to Splunk to find data. Make a plan to achieve the task.
+Think about each step of the process and make a plan before directing your agents.
+Break down the task into small steps.
+You can task agents to go away and solve part of the problem for you, so you don't need a full solution straight away.
+Do not suggest specific queries, this is the other analyst agent's job.
+{scenario_message}
+"""
+
 SENSE_CHECKER_SYSTEM_MESSAGE = f"""
-    A cyber security expert. Check the other agents logic and technical detail of the other agents. Look for any flawed assumptions, such as incorrect use of fields.
-    Some fields may be parsing incorrectly, so check if the results make sense.
-    Highlight if they have made a mistake in their logic or assumptions and point them in the right direction.
-    Focus only on the high level concepts. Do not suggest specific Splunk queries.
-    Assume all actions requested by the planner are approved by legal.
-    {scenario_message}
-    """
+A cyber security expert. Check the other agents logic and technical detail of the other agents. Look for any flawed assumptions, such as incorrect use of fields.
+Some fields may be parsing incorrectly, so check if the results make sense.
+Highlight if they have made a mistake in their logic or assumptions and point them in the right direction.
+Focus only on the high level concepts. Do not suggest specific Splunk queries.
+Direct them back on task if they start to get distracted with irrelevant details.
+Assume all actions requested by the planner are approved by legal.
+{scenario_message}
+"""
 
 config_list_turbo = autogen.config_list_from_json(
     "OAI_CONFIG_LIST",
@@ -109,7 +119,7 @@ FUNCTIONS = [
     },
     {
         "name": "get_fields",
-        "description": "Returns a list of all the fields names available in a sourcetype.",
+        "description": "Returns all the fields names available in a sourcetype.",
         "parameters": {
             "type": "object",
             "properties": {
@@ -125,6 +135,7 @@ FUNCTIONS = [
 llm_config_turbo={
     "seed": 42,  # seed for caching and reproducibility
     "config_list": config_list_turbo,  # a list of OpenAI API configuration,
+    # "functions": FUNCTIONS
 }
 
 llm_config_4={
@@ -142,7 +153,7 @@ user_proxy = autogen.UserProxyAgent(
         "work_dir": "coding",
         "use_docker": False,  # set to True or image name like "python:3" to use docker
     },
-    # llm_config=llm_config,
+    # llm_config=llm_config_turbo,
     # system_message=SENSE_CHECKER_SYSTEM_MESSAGE
 )
 
@@ -159,18 +170,10 @@ splunker = autogen.AssistantAgent(
     system_message=ASSISTANT_SYSTEM_MESSAGE,
     llm_config={
         "seed": 42,  # seed for caching and reproducibility
-        "config_list": config_list_4,  # a list of OpenAI API configuration
+        "config_list": config_list_turbo,  # a list of OpenAI API configuration
         "functions": FUNCTIONS,
     },  # configuration for autogen's enhanced inference API which is compatible with OpenAI API
 )
-
-PLANNER_SYSTEM_MESSAGE =f"""
-A Planning agent that directs a SOC analyst agent. The agent has access to Splunk to find data. Do not suggest specific queries, just make a plan and allocate objectives.
-Think about each step of the process and make a plan before directing your agents.
-Break down the task into small steps.
-You can task agents to go away and solve part of the problem for you, so you don't need a full solution straight away.
-{scenario_message}
-"""
 
 pm = autogen.AssistantAgent(
     name="Planner",
@@ -190,7 +193,20 @@ sense_check = autogen.AssistantAgent(
 groupchat = autogen.GroupChat(agents=[user_proxy, pm, splunker, sense_check], messages=[], max_round=30)
 manager = autogen.GroupChatManager(groupchat=groupchat, llm_config=llm_config_turbo)
 # 
-prompt = input("Write a prompt:\n")
+# prompt = input("Write a prompt:\n")
+
+
+prompt = """
+Amber Turing was hoping for Frothly (her beer company) to be acquired by a potential competitor which fell through, but visited their website to find contact information for their executive team. What is the website domain that she visited? Answer example: google.com 
+
+Hints: Search for
+index=botsv2 earliest=0 amber
+and examine the client_ip field to find Amber's IP address.
+Use a query like this to see her Web traffic, using her correct IP address:
+index=botsv2 earliest=0 src_ip=1.1.1.1 
+Restrict this query to the stream:http sourcetype. There are 198 events.
+Look at the site values and look for names of rival beer makers.
+"""
 
 # the assistant receives a message from the user_proxy, which contains the task description
 user_proxy.initiate_chat(
