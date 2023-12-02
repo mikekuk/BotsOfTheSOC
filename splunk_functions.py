@@ -21,6 +21,9 @@ service = connect(
 )
 
 
+# Python helper functions
+
+
 def splunk_query(query, earliest_time="2017-07-31T20:15:00.000+00:00", latest_time="2017-08-31T18:00:00.000+00:00", dataframe=False, splunk_service=service):
     """
     Execute a Splunk query and return the results as a pandas DataFrame.
@@ -79,3 +82,56 @@ def get_sourcetypes():
 
 def get_fields(sourcetype):
     return fields_dict[sourcetype]
+
+
+
+
+# AutoGen functions
+
+sourcetypes = "\n".join(get_sourcetypes())
+
+functions = [
+    {
+        "name": "splunk_query",
+        "description": "Use this function to query Splunk spl. Input should be a fully formed spl query. Search iteratively by first exploring the data and available fields. Do not assume all felids are correctly parsed.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": f"""
+                            SPL query extracting info to answer the user's question.
+                            Always search index botsv2. When first using a new sourcetype, start by exploring the possible fields.
+                            Never use time selectors in the search, instead us the earliest_time and latest_time properties to set search windows.
+                            Splunk has the following data sourcetypes available:
+                                
+                                {sourcetypes}
+                            """,
+                },
+                "earliest_time": {
+                    "type": "string",
+                    "description": "The earliest time for the search. Input should be in ISO datetime format."
+                },
+               "latest_time": {
+                    "type": "string",
+                    "description": "The latest time for the search. Input should be in ISO datetime format."
+                } 
+            },
+            "required": ["query"],
+        },
+    },
+    {
+        "name": "get_fields",
+        "description": "Returns all the fields names available in a sourcetype.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "sourcetype": {
+                    "type": "string",
+                    "description": "The name of the sourcetype.",
+                },
+            },
+            "required": ["sourcetype"],
+        },
+    },
+]
