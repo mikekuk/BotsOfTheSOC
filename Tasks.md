@@ -1,12 +1,13 @@
 # Outstanding tasks
 
-## Splunk
-
-- Try BOTSv2
 
 ## AutoGen
 
-#### Basic NLP to splunk set up
+- Try function architecture.
+- Optimize system messages.
+- Reduce system messages to <= 2000 char.
 
-- Build splunk function
-- Make splunk function in agent tools
+## MemGPT
+
+- Test MemGPT with Splunk agent.
+- Figure put human feature.

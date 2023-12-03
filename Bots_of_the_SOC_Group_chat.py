@@ -7,8 +7,6 @@ from system_messages import assistant_system_message, sense_checker_system_messa
 dotenv.load_dotenv(".env")
 
 
-SPLUNK_HOST="localhost"
-SPLUNK_PORT="8089"
 username=os.getenv('SPLUNK_UN')
 password=os.getenv('SPLUNK_PW')
 

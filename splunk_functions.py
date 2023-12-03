@@ -8,13 +8,15 @@ import json
 
 
 INDEX = "botsv2"
+SPLUNK_HOST="localhost"
+SPLUNK_PORT="8089"
 
 load_dotenv(".env")
 
 
 # To use the function, you must first create a Splunk service connection:
 service = connect(
-    host="localhost",
+    host=SPLUNK_HOST,
     port="8089",
     username=os.getenv('SPLUNK_UN'),
     password=os.getenv('SPLUNK_PW')
@@ -101,7 +103,7 @@ functions = [
                     "type": "string",
                     "description": f"""
                             SPL query extracting info to answer the user's question.
-                            Always search index botsv2. When first using a new sourcetype, start by exploring the possible fields.
+                            ALWAYS search index 'botsv2'. When first using a new sourcetype, start by exploring the possible fields.
                             Never use time selectors in the search, instead us the earliest_time and latest_time properties to set search windows.
                             Splunk has the following data sourcetypes available:
                                 
