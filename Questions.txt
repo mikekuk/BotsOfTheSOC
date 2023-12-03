@@ -1,9 +1,0 @@
-Amber Turing was hoping for Frothly (her beer company) to be acquired by a potential competitor which fell through, but visited their website to find contact information for their executive team. What is the website domain that she visited? Answer example: google.com 
-
-Hints: Search for
-index=botsv2 earliest=0 amber
-and examine the client_ip field to find Amber's IP address.
-Use a query like this to see her Web traffic, using her correct IP address:
-index=botsv2 earliest=0 src_ip=1.1.1.1 
-Restrict this query to the stream:http sourcetype. There are 198 events.
-Look at the site values and look for names of rival beer makers.

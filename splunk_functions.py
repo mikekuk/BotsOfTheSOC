@@ -5,11 +5,21 @@ import io
 from dotenv import load_dotenv
 import os
 import json
+import logging
+from datetime import datetime
+import re
+
+# Configure the logging settings
+logging.basicConfig(filename='splunk_log', level=logging.INFO, format='%(asctime)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+
+
 
 
 INDEX = "botsv2"
 SPLUNK_HOST="localhost"
 SPLUNK_PORT="8089"
+MAX_CHAR_RETURN = 10000 # Sets the target max number of chars to return from Splunk for log results. This only effects results that exceed the max row count.
+MAX_ROW_RETRUN = 200 # Sets the max number of rows to return from Splunk
 
 load_dotenv(".env")
 
@@ -39,6 +49,10 @@ def splunk_query(query, earliest_time="2017-07-31T20:15:00.000+00:00", latest_ti
     Returns:
     - df: pandas DataFrame containing the results of the query.
     """
+       # Log the function call with parameters and timestamp
+    log_entry = f"Query: {query}, Earliest Time: {earliest_time}, Latest Time: {latest_time}, Dataframe: {dataframe}, Splunk Service: {splunk_service}"
+    logging.info(log_entry)
+
     # Run a one-shot search and return the results as a reader object
     rr = splunk_service.jobs.export(
         f"search {query}",
@@ -61,17 +75,35 @@ def splunk_query(query, earliest_time="2017-07-31T20:15:00.000+00:00", latest_ti
         print(f"An error occurred: {e}")
     
     # Catch very large returns to save tokens
-    if len(df) > 100:
+    if len(df) > MAX_ROW_RETRUN:
         summary = df.describe(include='all')
         summary = summary.loc[['unique','top']].to_json()
-        return_sting = f"Your search returned {len(df)} rows. Consider a more refined search. Here is a summary in JSON: \n{summary} and the first ten rows:\n {df.loc[:10].to_string()}"
-        return return_sting
+        rows = 10
+        return_sting = f"Your search returned {len(df)} rows. Consider a more refined search. Here is a summary in JSON: \n{summary} and the first {rows} rows:\n {df.loc[:rows].to_string()}"
+        while len(return_sting) >= MAX_CHAR_RETURN:
+            # print(f"[+] Rows: {rows} - Len: {len(return_sting)}") # Used for debugging
+            rows -= 1
+            return_sting = f"Your search returned {len(df)} rows. Consider a more refined search. Here is a summary in JSON: \n{summary} and the first {rows} rows:\n {df.loc[:rows].to_string()}"
+            if rows == 1:
+                break
+    else:
+        return_sting = df.to_string()
+
+
+    # Strip excess whitespace to save tokens.
+    return_sting = re.sub(r'\s{12,}', ' ', return_sting)
+    return_sting = "\n".join([line.rstrip() for line in return_sting.splitlines()])
+
+
+    if len(return_sting) > MAX_CHAR_RETURN:
+        return_sting = f"The search returned a long result. This is truncated to the first {MAX_CHAR_RETURN} characters.\n\n {return_sting[:MAX_CHAR_RETURN]}"
+
 
     if dataframe:
         # Create a pandas DataFrame from the CSV content
         return df
     else:
-        return df.to_string()
+        return return_sting
 
 with open(f"{INDEX}_splunk_field.json", "r") as f:
     raw_json = f.read()
@@ -84,8 +116,6 @@ def get_sourcetypes():
 
 def get_fields(sourcetype):
     return fields_dict[sourcetype]
-
-
 
 
 # AutoGen functions
@@ -124,7 +154,7 @@ functions = [
     },
     {
         "name": "get_fields",
-        "description": "Returns all the fields names available in a sourcetype.",
+        "description": "Returns a json all availble felids in a sourcetype. The output contains the field name and coverage as a percentage, where 1 means all records have the field.",
         "parameters": {
             "type": "object",
             "properties": {

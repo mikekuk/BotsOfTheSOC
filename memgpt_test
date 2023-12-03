@@ -5,7 +5,7 @@ from memgpt.autogen.memgpt_agent import create_memgpt_autogen_agent_from_config
 from memgpt.presets.presets import DEFAULT_PRESET
 from memgpt.constants import LLM_MAX_TOKENS
 
-from system_messages import assistant_system_message, planner_system_message
+from system_messages import assistant_system_message, planner_system_message, assistant_system_message_short
 from splunk_functions import get_fields, splunk_query, functions
 
 load_dotenv(".env")
@@ -15,7 +15,7 @@ USE_OPENAI = True
 # USE_OPENAI = FalseWhat i
 if USE_OPENAI:
     # For demo purposes let's use gpt-4
-    model = "gpt-3.5-turbo-1106"
+    model = "gpt-4"
 
     # This config is for AutoGen agents that are not powered by MemGPT
     config_list = [
@@ -79,14 +79,14 @@ llm_config_memgpt = {"config_list": config_list_memgpt, "seed": 42}
 user_proxy = autogen.UserProxyAgent(
     name="user_proxy",
     human_input_mode="TERMINATE",
-    max_consecutive_auto_reply=10,
+    max_consecutive_auto_reply=15,
     is_termination_msg=lambda x: x.get("content", "") and x.get("content", "").rstrip().endswith("TERMINATE"),
     code_execution_config={
         "work_dir": "coding",
         "use_docker": False,  # set to True or image name like "python:3" to use docker
     },
     # llm_config=llm_config_turbo,
-    # system_message=SENSE_CHECKER_SYSTEM_MESSAGE
+    system_message="A proxy capable of executing function calls only."
 )
 
 user_proxy.register_function(
@@ -97,40 +97,54 @@ user_proxy.register_function(
 )
 
 
-# The agent playing the role of the product manager (PM)
-pm = autogen.AssistantAgent(
-    name="Product_manager",
-    system_message="A planning agent",
-    llm_config=llm_config,
-    default_auto_reply="...",  # Set a default auto-reply message here (non-empty auto-reply is required for LM Studio)
-)
+# # The agent playing the role of the product manager (PM)
+# pm = autogen.AssistantAgent(
+#     name="Product_manager",
+#     system_message="A planning agent",
+#     llm_config=llm_config,
+#     default_auto_reply="...",  # Set a default auto-reply message here (non-empty auto-reply is required for LM Studio)
+# )
 
 
 
 # create an AssistantAgent named "splunker"
 splunker = autogen.AssistantAgent(
     name="Splunk_analyst",
-    system_message = assistant_system_message,
+    system_message = assistant_system_message_short,
     llm_config=llm_config
 )
 
 
 # In our example, we swap this AutoGen agent with a MemGPT agent
 # This MemGPT agent will have all the benefits of MemGPT, ie persistent memory, etc.
-coder = create_memgpt_autogen_agent_from_config(
-    "MemGPT_planner",
+mem_planner = create_memgpt_autogen_agent_from_config(
+    name="MemGPT_planner",
     llm_config=llm_config_memgpt,
-    system_message="Plan the tasks for Splunk_analyst ot perform and keep track of any findings.",
+    system_message=planner_system_message,
     interface_kwargs=interface_kwargs,
     default_auto_reply="...",  # Set a default auto-reply message here (non-empty auto-reply is required for LM Studio)
 )
 
 # Initialize the group chat between the user and two LLM agents (PM and coder)
-groupchat = autogen.GroupChat(agents=[user_proxy, coder, splunker], messages=[], max_round=12)
+groupchat = autogen.GroupChat(agents=[user_proxy, mem_planner, splunker], messages=[], max_round=12)
 manager = autogen.GroupChatManager(groupchat=groupchat, llm_config=llm_config)
+
+
+prompt = """
+Amber Turing was hoping for Frothly (her beer company) to be acquired by a potential competitor which fell through, but visited their website to find contact information for their executive team. What is the website domain that she visited? Answer example: google.com 
+
+Hints: Search for
+index=botsv2 earliest=0 amber
+and examine the client_ip field to find Amber's IP address.
+Use a query like this to see her Web traffic, using her correct IP address:
+index=botsv2 earliest=0 src_ip=1.1.1.1 
+Restrict this query to the stream:http sourcetype. There are 198 events.
+Look at the site values and look for names of rival beer makers.
+"""
+
 
 # Begin the group chat with a message from the user
 user_proxy.initiate_chat(
     manager,
-    message="How many DNS servers are used?",
+    message=prompt,
 )

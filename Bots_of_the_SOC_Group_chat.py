@@ -2,7 +2,9 @@ import autogen
 import dotenv
 import os
 from splunk_functions import splunk_query, get_fields, functions
-from system_messages import assistant_system_message, sense_checker_system_message, planner_system_message
+from system_messages import assistant_system_message, sense_checker_system_message, planner_system_message, assistant_system_message_short
+
+SEED = 40
 
 dotenv.load_dotenv(".env")
 
@@ -38,13 +40,13 @@ config_list_4 = autogen.config_list_from_json(
 
 
 llm_config_turbo={
-    "seed": 42,  # seed for caching and reproducibility
+    "seed": SEED,  # seed for caching and reproducibility
     "config_list": config_list_turbo,  # a list of OpenAI API configuration,
     # "functions": functions
 }
 
 llm_config_4={
-    "seed": 42,  # seed for caching and reproducibility
+    "seed": SEED,  # seed for caching and reproducibility
     "config_list": config_list_4,  # a list of OpenAI API configuration,
 }
 
@@ -59,7 +61,7 @@ user_proxy = autogen.UserProxyAgent(
         "use_docker": False,  # set to True or image name like "python:3" to use docker
     },
     # llm_config=llm_config_turbo,
-    # system_message=SENSE_CHECKER_SYSTEM_MESSAGE
+    system_message="A proxy capable of executing function calls only."
 )
 
 user_proxy.register_function(
@@ -72,19 +74,19 @@ user_proxy.register_function(
 # create an AssistantAgent named "splunker"
 splunker = autogen.AssistantAgent(
     name="Splunk_analyst",
-    system_message = assistant_system_message,
+    system_message = assistant_system_message_short,
     llm_config={
-        "seed": 42,  # seed for caching and reproducibility
+        "seed": SEED,  # seed for caching and reproducibility
         "config_list": config_list_turbo,  # a list of OpenAI API configuration
         "functions": functions,
     },  # configuration for autogen's enhanced inference API which is compatible with OpenAI API
 )
 
-pm = autogen.AssistantAgent(
-    name="Planner",
-    system_message = planner_system_message,
-    llm_config=llm_config_turbo
-)
+# pm = autogen.AssistantAgent(
+#     name="Planner",
+#     system_message = planner_system_message,
+#     llm_config=llm_config_turbo
+# )
 
 
 sense_check = autogen.AssistantAgent(
@@ -94,22 +96,17 @@ sense_check = autogen.AssistantAgent(
 )
 
 
-groupchat = autogen.GroupChat(agents=[user_proxy, pm, splunker, sense_check], messages=[], max_round=30)
+groupchat = autogen.GroupChat(agents=[user_proxy, splunker, sense_check], messages=[], max_round=30)
 manager = autogen.GroupChatManager(groupchat=groupchat, llm_config=llm_config_turbo)
 # 
 # prompt = input("Write a prompt:\n")
 
 
 prompt = """
-Amber Turing was hoping for Frothly (her beer company) to be acquired by a potential competitor which fell through, but visited their website to find contact information for their executive team. What is the website domain that she visited? Answer example: google.com 
+What is the public IPv4 address of the server running www.brewertalk.com?
 
-Hints: Search for
-index=botsv2 earliest=0 amber
-and examine the client_ip field to find Amber's IP address.
-Use a query like this to see her Web traffic, using her correct IP address:
-index=botsv2 earliest=0 src_ip=1.1.1.1 
-Restrict this query to the stream:http sourcetype. There are 198 events.
-Look at the site values and look for names of rival beer makers.
+Hints: Do you have access to a network diagram? If you do, use it!
+A Splunk Stream forwarder running in the Frothly on-prem environment would observe http traffic destined for www.brewertalk.com as having an internet routable IP address.
 """
 
 # the assistant receives a message from the user_proxy, which contains the task description

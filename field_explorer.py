@@ -58,9 +58,12 @@ splunk_data_dict = {}
 
 # %%
 for sourcetype in tqdm(source_types_list):
-    fields = splunk_query(f"index={index} sourcetype={sourcetype}| fieldsummary | stats values(field)")
-    fields_list = [x for x in fields.split(" ") if x != ""][1:]
-    splunk_data_dict[sourcetype] = fields_list
+    fields = splunk_query(f"index={index} sourcetype={sourcetype}| fieldsummary | table field count", dataframe=True)
+    total_rows = max(fields['count'])
+    fields["coverage"] = round((fields['count'] / total_rows), 2)
+    selected_cols = ['field', 'coverage']
+    fields_dict = fields[selected_cols].to_dict(orient='records')
+    splunk_data_dict[sourcetype] = fields_dict
 
 # %%
 splunk_json = json.dumps(splunk_data_dict)
