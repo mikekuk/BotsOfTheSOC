@@ -1,54 +1,47 @@
-[
-    {
-        "Ref" : "BOTS2 100",
+{    
+    "BOTS 100": {
         "Number": 100,
         "Question": "Amber Turing was hoping for Frothly (her beer company) to be acquired by a potential competitor which fell through, but visited their website to find contact information for their executive team. What is the website domain that she visited? Answer example: google.com",
         "Hints": "Search for\nindex=botsv2 earliest=0 amber\nand examine the client_ip field to find Amber's IP address.\nUse a query like this to see her Web traffic, using her correct IP address:\n\tindex=botsv2 earliest=0 src_ip=1.1.1.1 \nRestrict this query to the stream:http sourcetype. There are 198 events.\nLook at the site values and look for names of rival beer makers.",
         "Points": 10,
         "Answer": "www.brekbeer.com"
     },
-    {
-        "Ref":"BOTS2 101",
+    "BOTS2 101": {
         "Number": 101,
         "Question": "Amber found the executive contact information and sent him an email. What is the CEO's name? Provide the first and last name.",
         "Hints": "Look for emails to Amber Turing.\n\nFind emails from aturing that were sent to the domain from question 100.\nLook at the sourcetype=stream:smtp and filter on the sender=aturing@froth.ly and/or recipient=aturing@froth.ly. Look at the content and body of emails that have something to do with competitors. The name of the CEO should be in the email.",
         "Points": 10,
         "Answer": "Martin Berk"
     },
-    {
-        "Ref":"BOTS2 102",
+    "BOTS2 102": {
         "Number": 102,
         "Question": "After the initial contact with the CEO, Amber contacted another employee at this competitor. What is that employee's email address?",
         "Hints": "Look at Amber's email traffic.\nFind the last email from the domain in question 100.",
         "Points": 10,
         "Answer":"hbernhard@berkbeer.com"
     },
-    {
-        "Ref":"BOTS2 103",
+    "BOTS2 103": {
         "Number": 103,
         "Question": "What is the name of the file attachment that Amber sent to a contact at the competitor?",
         "Hints": "Look for emails sent from Amber Turing.\nLook for aturing@froth.ly sending email to the address listed in question 102.\nSearch sourcetype=stream:smtp sender=aturing@froth.ly and find the attachment she sent.",
         "Points": 10,
         "Answer": "Saccharomyces_cerevisiae_patent.docx"
     },
-    {
-        "Ref":"BOTS2 104",
+    "BOTS2 104": {
         "Number": 104,
         "Question": "What is Amber's personal email address?",
         "Hints": "Look for emails sent from Amber Turing.\nReview the body of emails that Amber has sent.\nReview the email with base64-encoded text for body (or content) and decode the base64.",
         "Points": 15,
-        "Answer": "ambersthebest@yeastiebeastie.com",
+        "Answer": "ambersthebest@yeastiebeastie.com"
     },
-    {
-        "Ref":"BOTS2 105",
+    "BOTS2 105": {
         "Number": 105,
         "Question": "What version of TOR did Amber install to obfuscate her web browsing? Answer guidance: Numeric with one or more delimiter.",
         "Hints": "",
         "Points": 15,
         "Answer": "7.0.4"
     }
-]
-
+}
 
 
 

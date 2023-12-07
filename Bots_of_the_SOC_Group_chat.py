@@ -3,8 +3,10 @@ import dotenv
 import os
 from splunk_functions import splunk_query, get_fields, functions
 from system_messages import assistant_system_message, sense_checker_system_message, planner_system_message, assistant_system_message_short
+from prompt_functions import load_questions, get_prompt, get_answer
 
 SEED = 40
+QUESTIONS = 'Questions.json'
 
 dotenv.load_dotenv(".env")
 
@@ -101,13 +103,12 @@ manager = autogen.GroupChatManager(groupchat=groupchat, llm_config=llm_config_tu
 # 
 # prompt = input("Write a prompt:\n")
 
+questions = load_questions(QUESTIONS)
 
-prompt = """
-What is the public IPv4 address of the server running www.brewertalk.com?
+# TODO: Make iterations to work over all questions.
 
-Hints: Do you have access to a network diagram? If you do, use it!
-A Splunk Stream forwarder running in the Frothly on-prem environment would observe http traffic destined for www.brewertalk.com as having an internet routable IP address.
-"""
+prompt = get_prompt(3, questions)
+
 
 # the assistant receives a message from the user_proxy, which contains the task description
 user_proxy.initiate_chat(
