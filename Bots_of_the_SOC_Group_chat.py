@@ -3,9 +3,9 @@ import dotenv
 import os
 from splunk_functions import splunk_query, get_fields, functions
 from system_messages import assistant_system_message, sense_checker_system_message, planner_system_message, assistant_system_message_short
-from prompt_functions import load_questions, get_prompt, get_answer
+from prompt_functions import load_questions, get_prompts
 
-SEED = 40
+SEED = 42
 QUESTIONS = 'Questions.json'
 
 dotenv.load_dotenv(".env")
@@ -39,8 +39,6 @@ config_list_4 = autogen.config_list_from_json(
     },
 )
 
-
-
 llm_config_turbo={
     "seed": SEED,  # seed for caching and reproducibility
     "config_list": config_list_turbo,  # a list of OpenAI API configuration,
@@ -55,7 +53,7 @@ llm_config_4={
 # create a UserProxyAgent instance named "user_proxy"
 user_proxy = autogen.UserProxyAgent(
     name="user_proxy",
-    human_input_mode="TERMINATE",
+    human_input_mode="NEVER",
     max_consecutive_auto_reply=15,
     is_termination_msg=lambda x: x.get("content", "") and x.get("content", "").rstrip().endswith("TERMINATE"),
     code_execution_config={
@@ -97,6 +95,13 @@ sense_check = autogen.AssistantAgent(
     llm_config=llm_config_turbo
 )
 
+marker = autogen.AssistantAgent(
+    name="marker",
+    system_message = "Evaluate student answers against a textbook answer. Return True of correct and False if incorrect",
+    llm_config=llm_config_turbo
+)
+
+
 
 groupchat = autogen.GroupChat(agents=[user_proxy, splunker, sense_check], messages=[], max_round=30)
 manager = autogen.GroupChatManager(groupchat=groupchat, llm_config=llm_config_turbo)
@@ -107,13 +112,14 @@ questions = load_questions(QUESTIONS)
 
 # TODO: Make iterations to work over all questions.
 
-prompt = get_prompt(3, questions)
+prompts, answers = get_prompts(questions)
 
 
-# the assistant receives a message from the user_proxy, which contains the task description
-user_proxy.initiate_chat(
-    manager,
-    message=prompt,
-)
+if __name__ == "__main__":
+    # the assistant receives a message from the user_proxy, which contains the task description
+    user_proxy.initiate_chat(
+        manager,
+        message=prompts[0],
+    )
 
 

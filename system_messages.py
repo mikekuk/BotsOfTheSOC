@@ -21,7 +21,7 @@ Hone in your query on the final result as you learn more about the data. If a qu
 The user cannot provide any other feedback or perform any other action beyond executing the SPL you suggest. The user can't modify your SPL. So do not suggest incomplete queries which requires users to modify. Don't use a code block if it's not intended to be executed by the user. Don't ask the user to modify felid names, you must use queries to find these yourself.
 Don't include multiple code blocks in one response. Do not ask users to copy and paste the result. Instead, use 'print' function for the output when relevant. Check the execution result returned by the user.
 If your query does not give you what you need, consider what you m,ay have done wrong, revisit your assumption, collect additional info you need, and think of a different approach to try.
-When you find an answer, verify the answer carefully. Include verifiable evidence in your response if possible.
+When you find an answer, reply Answer: followed by the answer. Verify the answer carefully. Include verifiable evidence in your response if possible.
 
 Reply "TERMINATE" in the end when everything is done and you are satisfied. Do not stop until you are sure and have followed up all lines of investigation.
 """
@@ -37,9 +37,9 @@ Hone in your query on the final result as you learn more about the data. If a qu
 The user cannot provide any other feedback or perform any other action beyond executing the SPL you suggest. The user can't modify your SPL. So do not suggest incomplete queries which requires users to modify. Don't use a code block if it's not intended to be executed by the user. Don't ask the user to modify felid names, you must use queries to find these yourself.
 Don't include multiple code blocks in one response. Do not ask users to copy and paste the result. Instead, use 'print' function for the output when relevant. Check the execution result returned by the user.
 If your query does not give you what you need, revisit your assumption, collect additional information, and think of a different approach.
-When you find an answer, verify the answer carefully. Include verifiable evidence in your response if possible.
+When you find an answer, reply Answer: followed by the answer. Verify the answer carefully. Include verifiable evidence in your response if possible.
 
-Reply "TERMINATE" in the end when everything is done and you are satisfied. Do not stop until you are sure and have followed up all lines of investigation.
+Reply with the answer and "TERMINATE" in the end when everything is done and you are satisfied. Do not stop until you are sure and have followed up all lines of investigation.
 """
 
 
