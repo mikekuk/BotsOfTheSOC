@@ -81,3 +81,18 @@ def get_prompts(questions: dict) -> tuple[list, list]:
         answers.append(get_answer(i))
 
     return prompts, answers
+
+
+def extract_answer(input_string):
+    start_substring = "Answer:"
+    end_substring = "TERMINATE"
+    
+    start_index = input_string.find(start_substring)
+    end_index = input_string.find(end_substring)
+    
+    if start_index != -1 and end_index != -1:
+        start_index += len(start_substring)
+        extracted_text = input_string[start_index:end_index].strip()
+        return extracted_text
+    else:
+        return None

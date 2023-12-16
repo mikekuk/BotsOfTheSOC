@@ -1,18 +1,22 @@
 import autogen
-import dotenv
+from openai import OpenAI
 import os
+import csv
 from splunk_functions import splunk_query, get_fields, functions
 from system_messages import assistant_system_message, sense_checker_system_message, planner_system_message, assistant_system_message_short
-from prompt_functions import load_questions, get_prompts
+from prompt_functions import load_questions, get_prompts, extract_answer
+import dotenv
 
 SEED = 42
 QUESTIONS = 'Questions.json'
+LOG = 'log.csv'
 
 dotenv.load_dotenv(".env")
+key=os.getenv('OPENAI_API_KEY')
+client = OpenAI(api_key=key)
 
-
-username=os.getenv('SPLUNK_UN')
-password=os.getenv('SPLUNK_PW')
+# username=os.getenv('SPLUNK_UN')
+# password=os.getenv('SPLUNK_PW')
 
 
 config_list_turbo = autogen.config_list_from_json(
@@ -95,11 +99,11 @@ sense_check = autogen.AssistantAgent(
     llm_config=llm_config_turbo
 )
 
-marker = autogen.AssistantAgent(
-    name="marker",
-    system_message = "Evaluate student answers against a textbook answer. Return True of correct and False if incorrect",
-    llm_config=llm_config_turbo
-)
+# marker = autogen.AssistantAgent(
+#     name="marker",
+#     system_message = "Evaluate student answers against a textbook answer. Return True of correct and False if incorrect",
+#     llm_config=llm_config_turbo
+# )
 
 
 
@@ -110,16 +114,58 @@ manager = autogen.GroupChatManager(groupchat=groupchat, llm_config=llm_config_tu
 
 questions = load_questions(QUESTIONS)
 
-# TODO: Make iterations to work over all questions.
-
 prompts, answers = get_prompts(questions)
 
+for i in range(len(prompts)):
 
-if __name__ == "__main__":
-    # the assistant receives a message from the user_proxy, which contains the task description
     user_proxy.initiate_chat(
         manager,
-        message=prompts[0],
+        message=prompts[i],
     )
+
+    response = str(extract_answer(splunker.last_message()["content"]))
+
+    string = f"Student answer: {response}, Textbook: {answers[i]}"
+
+
+
+    response = client.chat.completions.create(
+    model="gpt-4-1106-preview",
+    messages=[
+        {"role": "system", "content": "Evaluate student answers against a textbook answer. Return True of correct and False if incorrect"},
+        {"role": "user", "content": string},
+    ]
+    )
+
+    result = response.choices[0].message.content
+
+    string_to_append = f"{i}, {result}, {string}"
+
+    # TODO: Add number of tokens and number of messages used.
+
+        # Check if the file exists
+    if not os.path.exists(LOG):
+        # If the file doesn't exist, create it and write the header row (if needed)
+        with open(LOG, 'w', newline='') as csvfile:
+            csv_writer = csv.writer(csvfile)
+            csv_writer.writerow(["index", "result", "answer_given", "answer_correct"])  # Replace with your column names
+
+    # Open the CSV file in append mode
+    with open(LOG, 'a', newline='') as csvfile:
+        # Create a CSV writer object
+        csv_writer = csv.writer(csvfile)
+        
+        # Append the string as a new row
+        csv_writer.writerow([string_to_append])
+
+
+# if __name__ == "__main__":
+#     # the assistant receives a message from the user_proxy, which contains the task description
+#     # TODO: Make iterations to work over all questions.
+#     # TODO: Make marker.
+#     user_proxy.initiate_chat(
+#         manager,
+#         message=prompts[0],
+#     )
 
 

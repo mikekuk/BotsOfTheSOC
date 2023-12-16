@@ -12,9 +12,6 @@ import re
 # Configure the logging settings
 logging.basicConfig(filename='splunk_log', level=logging.INFO, format='%(asctime)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 
-
-
-
 INDEX = "botsv2"
 SPLUNK_HOST="localhost"
 SPLUNK_PORT="8089"
@@ -27,7 +24,7 @@ load_dotenv(".env")
 # To use the function, you must first create a Splunk service connection:
 service = connect(
     host=SPLUNK_HOST,
-    port="8089",
+    port=SPLUNK_PORT,
     username=os.getenv('SPLUNK_UN'),
     password=os.getenv('SPLUNK_PW')
 )
