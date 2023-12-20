@@ -1,6 +1,6 @@
 import json
 
-def load_questions(file: str) -> dict:
+def load_questions(file: str) -> list[dict[str, any]]:
     """
     Loads JSON of questions list.
     
@@ -20,9 +20,9 @@ def _sort_questions(questions: dict) -> list:
 
     return questions_list
 
-def get_prompts(questions: dict) -> tuple[list, list]:
+def get_prompts(questions: list) -> tuple[list, list]:
     """
-    Generates lists of prompts and answers from questions dict.
+    Generates lists of prompts and answers from questions list of dicts.
     To be used with load_questions.
     
     Example use: 
@@ -30,19 +30,17 @@ def get_prompts(questions: dict) -> tuple[list, list]:
         prompts, answers = get_prompt(questions)
     """
 
-    questions_list = _sort_questions(questions)
-
     def get_question(idx: int) -> str:
-        return questions[questions_list[idx]]['Question']
+        return questions[idx]['Question']
     
     def get_answer(idx: int) -> str:
-        return questions[questions_list[idx]]['Answer']
+        return questions[idx]['Answer']
     
     def get_number(idx: int) -> str:
-        return questions[questions_list[idx]]['Number']
+        return questions[idx]['Number']
     
     def get_hint(idx: int) -> str:
-        hint = questions[questions_list[idx]]['Hints']
+        hint = questions[idx]['Hints']
         if hint == "":
             return hint
         else:
@@ -76,7 +74,7 @@ def get_prompts(questions: dict) -> tuple[list, list]:
     prompts = []
     answers = []
     
-    for i, question in enumerate(questions_list):
+    for i, question in enumerate(questions):
         prompts.append(get_prompt(i))
         answers.append(get_answer(i))
 

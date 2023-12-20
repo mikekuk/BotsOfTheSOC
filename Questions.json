@@ -1,47 +1,72 @@
-{    
-    "BOTS 100": {
+[    
+    {
         "Number": 100,
         "Question": "Amber Turing was hoping for Frothly (her beer company) to be acquired by a potential competitor which fell through, but visited their website to find contact information for their executive team. What is the website domain that she visited? Answer example: google.com",
         "Hints": "Search for\nindex=botsv2 earliest=0 amber\nand examine the client_ip field to find Amber's IP address.\nUse a query like this to see her Web traffic, using her correct IP address:\n\tindex=botsv2 earliest=0 src_ip=1.1.1.1 \nRestrict this query to the stream:http sourcetype. There are 198 events.\nLook at the site values and look for names of rival beer makers.",
         "Points": 10,
         "Answer": "www.berkbeer.com"
     },
-    "BOTS2 101": {
+    {
         "Number": 101,
         "Question": "Amber found the executive contact information and sent him an email. What is the CEO's name? Provide the first and last name.",
         "Hints": "Look for emails to Amber Turing.\n\nFind emails from aturing that were sent to the domain from question 100.\nLook at the sourcetype=stream:smtp and filter on the sender=aturing@froth.ly and/or recipient=aturing@froth.ly. Look at the content and body of emails that have something to do with competitors. The name of the CEO should be in the email.",
         "Points": 10,
         "Answer": "Martin Berk"
     },
-    "BOTS2 102": {
+    {
         "Number": 102,
         "Question": "After the initial contact with the CEO, Amber contacted another employee at this competitor. What is that employee's email address?",
         "Hints": "Look at Amber's email traffic.\nFind the last email from the domain in question 100.",
         "Points": 10,
         "Answer":"hbernhard@berkbeer.com"
     },
-    "BOTS2 103": {
+    {
         "Number": 103,
         "Question": "What is the name of the file attachment that Amber sent to a contact at the competitor?",
         "Hints": "Look for emails sent from Amber Turing.\nLook for aturing@froth.ly sending email to the address listed in question 102.\nSearch sourcetype=stream:smtp sender=aturing@froth.ly and find the attachment she sent.",
         "Points": 10,
         "Answer": "Saccharomyces_cerevisiae_patent.docx"
     },
-    "BOTS2 104": {
+    {
         "Number": 104,
         "Question": "What is Amber's personal email address?",
         "Hints": "Look for emails sent from Amber Turing.\nReview the body of emails that Amber has sent.\nReview the email with base64-encoded text for body (or content) and decode the base64.",
         "Points": 15,
         "Answer": "ambersthebest@yeastiebeastie.com"
     },
-    "BOTS2 105": {
+    {
         "Number": 105,
         "Question": "What version of TOR did Amber install to obfuscate her web browsing? Answer guidance: Numeric with one or more delimiter.",
         "Hints": "",
         "Points": 15,
         "Answer": "7.0.4"
+    },
+    {
+        "Number": 200,
+        "Question": "What is the public IPv4 address of the server running www.brewertalk.com?",
+        "Hints": "A Splunk Stream forwarder running in the Frothly on-prem environment would observe http traffic destined for www.brewertalk.com as having an internet routable IP address.",
+        "Points": 10,
+        "Answer": ""
+    },
+    {
+        "Number": 201,
+        "Question": "Provide the IP address of the system used to run a web vulnerability scan against www.brewertalk.com.",
+        "Hints": "App scanners are often 'noisy' and therefore easy to detect with automated correlation searches.\nDrill down into contributing events if you can!",
+        "Points": 15,
+        "Answer": ""
+    },
+    {
+        "Number": 202,
+        "Question": "The IP address from question 201 is also being used by a likely different piece of software to attack a URI path. What is the URI path? Answer guidance: Include the leading forward slash in your answer. Do not include the query string or other parts of the URI. Answer example: /phpinfo.php",
+        "Hints": "Analyze all HTTP traffic from the scanning system to www.brewertalk.com, and inspect the different HTTP user agents. A different HTTP user agent often indicates a different HTTP client program was in use.\n\nFor each HTTP user agent, inspect the URI that the user agent is interacting with.",
+        "Points": 10,
+        "Answer": ""
+    },
+    {
+        "Number": 203
     }
-}
+
+]
 
 
 
