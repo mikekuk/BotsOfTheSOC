@@ -1,2 +1,3 @@
-index,result,answer_given,answer_correct,token_count
-100,www.berkbeer.com,www.berkbeer.com,2870
+index,seed,result,points,answer_given,answer_correct,token_count
+100,42,True,10,www.berkbeer.com,www.berkbeer.com,2870
+101,42,False,10,Martin Berk,,10707

@@ -83,8 +83,10 @@ sense_check = autogen.AssistantAgent(
 groupchat = autogen.GroupChat(agents=[user_proxy, splunker, sense_check], messages=[], max_round=30)
 manager = autogen.GroupChatManager(groupchat=groupchat, llm_config=llm_config)
 
+SERIES = 0
 
 questions = load_questions(QUESTIONS)
+questions = questions[SERIES]
 prompts, answers = get_prompts(questions)
 
 for i in range(len(prompts)):
@@ -110,14 +112,14 @@ for i in range(len(prompts)):
     messages = groupchat.messages
     tokens = count_token(input=messages, model=MODEL)
 
-    row_to_append = [questions[i]['Number'], result, questions[i]['Answer'], extract_answer(messages[-1]['content']), tokens]
+    row_to_append = [questions[i]['Number'], SEED, result, questions[i]['Points'], questions[i]['Answer'], extract_answer(messages[-1]['content']), tokens]
 
         # Check if the file exists
     if not os.path.exists(LOG):
         # If the file doesn't exist, create it and write the header row (if needed)
         with open(LOG, 'w', newline='') as csvfile:
             csv_writer = csv.writer(csvfile)
-            csv_writer.writerow(["index", "result", "answer_given", "answer_correct", "token_count"])
+            csv_writer.writerow(["index", "seed","result", "points", "answer_given", "answer_correct", "token_count"])
 
     # Open the CSV file in append mode
     with open(LOG, 'a', newline='') as csvfile:
