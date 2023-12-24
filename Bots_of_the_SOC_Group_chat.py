@@ -1,6 +1,7 @@
 import autogen
 from autogen.token_count_utils import count_token
 from openai import OpenAI
+import json
 import os
 import csv
 from splunk_functions import splunk_query, get_fields, functions
@@ -8,10 +9,12 @@ from system_messages import assistant_system_message, sense_checker_system_messa
 from prompt_functions import load_questions, get_prompts, extract_answer
 import dotenv
 
-SEED = 42
+SEED = 3
 QUESTIONS = 'Questions.json'
+SERIES = 0
 LOG = 'log.csv'
 MODEL = "gpt-4-1106-preview"
+ROUNDS = 20
 
 dotenv.load_dotenv(".env")
 key=os.getenv('OPENAI_API_KEY')
@@ -80,10 +83,8 @@ sense_check = autogen.AssistantAgent(
     llm_config=llm_config
 )
 
-groupchat = autogen.GroupChat(agents=[user_proxy, splunker, sense_check], messages=[], max_round=30)
+groupchat = autogen.GroupChat(agents=[user_proxy, splunker, sense_check], messages=[], max_round=ROUNDS)
 manager = autogen.GroupChatManager(groupchat=groupchat, llm_config=llm_config)
-
-SERIES = 0
 
 questions = load_questions(QUESTIONS)
 questions = questions[SERIES]
@@ -102,7 +103,7 @@ for i in range(len(prompts)):
     response = client.chat.completions.create(
     model="gpt-4-1106-preview",
     messages=[
-        {"role": "system", "content": "Evaluate student answers against a textbook answer. Return True of correct and False if incorrect"},
+        {"role": "system", "content": "Evaluate student answers against a textbook answer. Return True of correct and False if incorrect or no answer is given. Only reply True or False, never anything else."},
         {"role": "user", "content": string},
     ]
     )
@@ -111,6 +112,9 @@ for i in range(len(prompts)):
 
     messages = groupchat.messages
     tokens = count_token(input=messages, model=MODEL)
+
+    with open(f"Message-Seed_{SEED}-Question_{questions[i]['Number']}", "w") as f:
+        f.write(json.dumps(messages))
 
     row_to_append = [questions[i]['Number'], SEED, result, questions[i]['Points'], questions[i]['Answer'], extract_answer(messages[-1]['content']), tokens]
 

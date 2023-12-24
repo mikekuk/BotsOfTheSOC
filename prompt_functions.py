@@ -81,7 +81,11 @@ def get_prompts(questions: list) -> tuple[list, list]:
     return prompts, answers
 
 
-def extract_answer(input_string):
+def extract_answer(input_string: str):
+
+    if type(input_string) != str:
+        return None
+
     start_substring = "Answer:"
     end_substring = "TERMINATE"
     

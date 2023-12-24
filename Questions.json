@@ -80,13 +80,6 @@
             "Answer": "gGsxysZL"
         },
         {
-            "Number": 205,
-            "Question": "What is user btun's password on brewertalk.com?",
-            "Hints": "His hashed password and salt was stolen via SQLi and captured in Splunk. Also note a 'top 1000' password list is available in a Splunk lookup table file called 'top_1000.csv'. Use '| inputlookup top_1000.csv' to inspect it.\n\nBy inspecting the code for this forum software, it can be determined that the stored password hash is computed as follows: md5( md5(salt) + md5(plaintext password) ) where '+' is simple string concatenation.\n\nThe Splunk eval command includes an md5 hash function. Beware that the exploit used in this attack chops the final character from the password hash and includes it as a single character string in the next SQLi extraction. When you use this string, either add the character back to the end of the hash, or just use a wildcard match on the beginning of it.\n\nBtun's salt value is 'tlX7cQPE' and his complete password hash is 'f91904c1dd2723d5911eeba409cc0d14'",
-            "Points": 20,
-            "Answer": "123456"
-        },
-        {
             "Number": 207,
             "Question": "What was the value of the cookie that Kevin's browser transmitted to the malicious URL as part of a XSS attack? Answer guidance: All digits. Not the cookie name or symbols like an equal sign.",
             "Hints": "Check out sourcetype=stream:htt\n\nInspect the uri_query field.",
@@ -122,20 +115,6 @@
             "Hints": "Look for video files downloaded to MACLORY-AIR13.",
             "Points": 10,
             "Answer": "Stormborn"
-        },
-        {
-            "Number": 302,
-            "Question": "What is Mallory Krauesen's phone number? Answer guidance: ddd-ddd-dddd where d=[0-9]. No country code.",
-            "Hints": "Use Identity Center in ES.",
-            "Points": 10,
-            "Answer": ""
-        },
-        {
-            "Number": 303,
-            "Question": "Enterprise Security contains a threat list notable event for MACLORY-AIR13 and suspect IP address 5.39.93.112. What is the name of the threatlist (i.e. Threat Group) that is triggering the notable?",
-            "Hints": "Look for threat activity from Mallory's MacBook in the Incident Review dashboard.",
-            "Points": 10,
-            "Answer": ""
         },
         {
             "Number": 304,
@@ -192,20 +171,6 @@
             "Hints": "Review the hints for question 310.",
             "Points": 10,
             "Answer": "eidk.hopto.org"
-        },
-        {
-            "Number": 312,
-            "Question": "What is the average Alexa 1M rank of the domains between August 18 and August 19 that MACLORY-AIR13 tries to resolve while connected via VPN to the corporate network? Answer guidance: Round to two decimal places. Remember to include domains with no rank in your average! Answer example: 3.23 or 223234.91",
-            "Hints": "You're going to need a lookup. Are there any loaded in the system that might help you?\nWe want the average of ranks. Not the average of hits to the domains.\nhttps://www.splunk.com/blog/2016/03/22/splunking-1-million-urls.html",
-            "Points": 10,
-            "Answer": ""
-        },
-        {
-            "Number": 313,
-            "Question": "Two .jpg-formatted photos of Mallory exist in Kevin Lagerfield's server home directory that have eight-character file names, not counting the .jpg extension. Both photos were encrypted by the ransomware. One of the photos can be downloaded at the following link, replacing 8CHARACTERS with the eight characters from the file name. https://splunk.box.com/v/8CHARACTERS After you download the file to your computer, decrypt the file using the encryption key used by the ransomware. What is the complete line of text in the photo, including any punctuation? Answer guidance: The encryption key can be found in Splunk.",
-            "Hints": "Understanding from OSINT how this ransomware behaves is key to the answer.\n\nThis ransomware is called 'Patcher' and it is terribly written and uses *NIX command line tools to wreak havoc.\n\nPatcher uses the UNIX zip utility.",
-            "Points": 10,
-            "Answer": ""
         }
     ],
     [
@@ -222,13 +187,6 @@
             "Hints": "You might need to get more information before you tackle this question. Have you figured out the IP address of Taedonggang's server?\nFrothly currently only collects SSL data with Stream. Look at the sourcetype 'stream:TCP' for more information about SSL data.\n\nIssuer' is a value found in a TLS/SSL certificate. Try and find SSL/TLS certificates tied to the IP address of Taedonggang's attacking server.\n\nLook in sourcetype=stream:tcp with the IP address of Taedonggang and the field ssl_issuer.",
             "Points": 10,
             "Answer": "C = US"
-        },
-        {
-            "Number": 402,
-            "Question": "Threat indicators for a specific file triggered notable events on two distinct workstations. What IP address did both workstations have a connection with?",
-            "Hints": "Check out the Incident Review dashboard.\nOpen notable events for more details.\nLook for two notable events with the exact same title that has a filename in it.",
-            "Points": 10,
-            "Answer": "160.153.91.7"
         },
         {
             "Number": 403,
@@ -252,26 +210,12 @@
             "Answer": "Ryan Kovar"
         },
         {
-            "Number": 406,
-            "Question": "What is the average Shannon entropy score of the subdomain containing UDP-exfiltrated data? Answer guidance: Cut off, not rounded, to the first decimal place. Answer examples: 3.2 or 223234.9",
-            "Hints": "First you will need to find the domain associated with the exfiltrated data. Look at the Stream metadata for a UDP protocol often used to exfiltrate data.\nReview the stream:dns sourcetype and find the IP address that has a high number of queries but is not a normal/legitimate target for DNS queries (IE not RFC1918 or Open DNS server). Look at the domain in the queries to that IP address. Pivot off of that to calculate shannon entropy.\n\nIf you have never calculated Shannon Entropy, look at the documents for the tool 'URL TOOLBOX' or recent entries in https://www.splunk.com/blog/2017/07/06/hunting-with-splunk-the-basics.html. This will teach you how to calculate Shannon entropy. Also review https://www.splunk.com/pdfs/events/govsummit/hunting_the_known_unknowns_with_DNS.pdf where you can learn how to detect DNS exfiltration",
-            "Points": 10,
-            "Answer": "3.6"
-        },
-        {
             "Number": 407,
             "Question": "To maintain persistence in the Frothly network, Taedonggang APT configured several Scheduled Tasks to beacon back to their C2 server. What single webpage is most contacted by these Scheduled Tasks? Answer guidance: Remove the path and type a single value with an extension. Answer example: index.php or images.html",
             "Hints": "Review the question for keywords and search against the hosts in the network.\nLook in the sysmon logs for workstations: XmlWinEventLog:Microsoft-Windows-Sysmon/Operational if you haven't figured out where to start!\n\nOnce you find the event for scheduled tasks, you will need to pivot to the sourcetype=WinRegistry. In that sourcetype, look for where the scheduled task receives its destination information. You will need to decode it!",
             "Points": 20,
             "Answer": "process.php"
-        },    
-        {
-            "Number": 408,
-            "Question": "The APT group Taedonggang is always building more infrastructure to attack future victims. Provide the IPV4 IP address of a Taedonggang controlled server that has a completely different first octet to other Taedonggang controlled infrastructure. Answer guidance: 4.4.4.4 has a different first octet than 8.4.4.4",
-            "Hints": "Look through your notes of this incident, if you have any. Specifically look at the IP addresses used by Taedonggang. You will need to take information from the Taedonggang infrastructure seen attacking Frothy and pivot to open source intelligence. Specifically look at the C2\nIP address used by Taedonggang to control their PowerShell Empire agents. Remember that less is more! Sometimes the absence of data helps you find things.\n\nLook at the SSL certificates. Think about fields that you can pivot on in open source intelligence.\n\nTaking information from hint number 3. Pivot off of different fields in an open source intelligence website that catalogs SSL certificates until you find the server! Review https://www.splunk.com/blog/2017/07/21/work-flow-ing-your-osint if you need help finding OSINT websites",
-            "Points": 20,
-            "Answer": "104.238.159.19"
-        },    
+        },
         {
             "Number": 409,
             "Question": "The Taedonggang group had several issues exfiltrating data. Determine how many bytes were successfully transferred in their final, mostly successful attempt to exfiltrate files via a method using TCP, using only the data available in Splunk logs. Use 1024 for byte conversion.",
