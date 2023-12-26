@@ -9,7 +9,7 @@ from system_messages import assistant_system_message, sense_checker_system_messa
 from prompt_functions import load_questions, get_prompts, extract_answer
 import dotenv
 
-SEED = 3
+SEED = 0
 QUESTIONS = 'Questions.json'
 SERIES = 0
 LOG = 'log.csv'
@@ -113,7 +113,7 @@ for i in range(len(prompts)):
     messages = groupchat.messages
     tokens = count_token(input=messages, model=MODEL)
 
-    with open(f"Message-Seed_{SEED}-Question_{questions[i]['Number']}", "w") as f:
+    with open(f"Message-Seed_{SEED}-Question_{questions[i]['Number']}.json", "w") as f:
         f.write(json.dumps(messages))
 
     row_to_append = [questions[i]['Number'], SEED, result, questions[i]['Points'], questions[i]['Answer'], extract_answer(messages[-1]['content']), tokens]
@@ -132,3 +132,5 @@ for i in range(len(prompts)):
         
         # Append the string as a new row
         csv_writer.writerow(row_to_append)
+
+    groupchat.reset()

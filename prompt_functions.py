@@ -67,7 +67,7 @@ def get_prompts(questions: list) -> tuple[list, list]:
             count +=1
         
         # Compile prompt
-        question_string = f"{background}\n\nTask: {idx} - {get_question(idx)}\n\n{get_hint(idx)}"
+        question_string = f"{background}\n\nTask: {get_number(idx)} - {get_question(idx)}\n\n{get_hint(idx)}"
 
         return question_string
     
