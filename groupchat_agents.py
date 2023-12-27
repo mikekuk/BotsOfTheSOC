@@ -1,0 +1,72 @@
+import autogen
+from splunk_functions import splunk_query, get_fields, functions
+from system_messages import assistant_system_message, sense_checker_system_message, planner_system_message, assistant_system_message_short
+from prompt_functions import load_questions, get_prompts, extract_answer
+from config import MODEL, SEED, ROUNDS
+
+
+
+config_list = autogen.config_list_from_json(
+    "OAI_CONFIG_LIST",
+    filter_dict={
+        "model": [
+            MODEL,
+            ],
+    },
+)
+
+
+llm_config={
+    "seed": SEED,  # seed for caching and reproducibility
+    "config_list": config_list,  # a list of OpenAI API configuration,
+    # "functions": functions
+}
+
+
+# create a UserProxyAgent instance named "user_proxy"
+user_proxy = autogen.UserProxyAgent(
+    name="user_proxy",
+    human_input_mode="NEVER",
+    max_consecutive_auto_reply=15,
+    is_termination_msg=lambda x: x.get("content", "") and x.get("content", "").rstrip().endswith("TERMINATE"),
+    code_execution_config={
+        "work_dir": "coding",
+        "use_docker": False,  # set to True or image name like "python:3" to use docker
+    },
+    # llm_config=llm_config_turbo,
+    system_message="A proxy capable of executing function calls only."
+)
+
+user_proxy.register_function(
+    function_map={
+        'splunk_query': splunk_query,
+        "get_fields": get_fields
+    }
+)
+
+# create an AssistantAgent named "splunker"
+splunker = autogen.AssistantAgent(
+    name="Splunk_analyst",
+    system_message = assistant_system_message_short,
+    llm_config={
+        "seed": SEED,  # seed for caching and reproducibility
+        "config_list": config_list,  # a list of OpenAI API configuration
+        "functions": functions,
+    },  # configuration for autogen's enhanced inference API which is compatible with OpenAI API
+)
+
+# pm = autogen.AssistantAgent(
+#     name="Planner",
+#     system_message = planner_system_message,
+#     llm_config=llm_config_turbo
+# )
+
+
+sense_check = autogen.AssistantAgent(
+    name="sense_check",
+    system_message = sense_checker_system_message,
+    llm_config=llm_config
+)
+
+groupchat = autogen.GroupChat(agents=[user_proxy, splunker, sense_check], messages=[], max_round=ROUNDS)
+manager = autogen.GroupChatManager(groupchat=groupchat, llm_config=llm_config)
