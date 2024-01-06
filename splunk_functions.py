@@ -117,6 +117,10 @@ def splunk_query_json(query: str, earliest_time:str="2017-07-31T20:15:00.000+00:
     - Raw splunk logs or an error message.
     """
 
+
+    if query[:7] != "search ":
+        query = "search " + query
+
     try:
         # Execute the query
         job = splunk_service.jobs.create(query, earliest_time=earliest_time, latest_time=latest_time, exec_mode='blocking', count=0)
@@ -138,20 +142,36 @@ def splunk_query_json(query: str, earliest_time:str="2017-07-31T20:15:00.000+00:
 
         # Handel searches with no results
         if results_json == []:
-            return "Your search returned no results."
+            return "Your search returned no results. If this is unexpected, try broadening your search to explore the data."
         
+        rows = 10
         # Handel searches with large numbers of results for token efficiency
         if results_count > MAX_ROW_RETURN:
-            rows = 10
-            return f"Your search returned {len(results_json)} rows. Consider a more refined search. Here are the first {rows} results:\n {json.dumps(results_json[:rows])}"
-        
-        # Handel searches with high character count for token efficiency
-        while len(json.dumps(results_json)) > MAX_CHAR_RETURN and len(results_json) >=1:
-            results_json = results_json[-1]
-            if len(results_json) == 1:
-                return f"The search returned {results_count} results. Consider a more refined search. Here is this first result:\n{json.dumps(results_json)}"
-            else:
+
+            results_json = results_json[:rows]
+            
+            # Handel large results with low row counts by gradually reducing the number of rows
+            if len(json.dumps(results_json[:rows])) > MAX_CHAR_RETURN:
+                while len(json.dumps(results_json)) > MAX_CHAR_RETURN and len(results_json) >=1:
+                    results_json = results_json[:-1]
+                rows = len(results_json)
+            
+            # Handel a single large result by truncating
+            if len(json.dumps(results_json)) > MAX_CHAR_RETURN and len(results_json) == 1:
                 return f"The search returned {results_count} results. Consider a more refined search. Even the first is very long, so has been truncated to the first {MAX_CHAR_RETURN} characters:\n{json.dumps(results_json)}"
+            
+
+            return f"Your search returned {results_count} rows. Consider a more refined search. Here are the first {rows} results:\n {json.dumps(results_json[:rows])}"
+        
+        # Handel large results with low row counts by gradually reducing the number of rows
+        if len(json.dumps(results_json[:rows])) > MAX_CHAR_RETURN:
+            while len(json.dumps(results_json)) > MAX_CHAR_RETURN and len(results_json) >=1:
+                results_json = results_json[-1]
+            rows = len(results_json)
+            
+        # Handel a single large result by truncating
+        if len(json.dumps(results_json)) > MAX_CHAR_RETURN and len(results_json) == 1:
+            return f"The search returned {results_count} results. Consider a more refined search. Even the first is very long, so has been truncated to the first {MAX_CHAR_RETURN} characters:\n{json.dumps(results_json)}"
 
         # Return the JSON results
         return json.dumps(results_json)
@@ -182,7 +202,7 @@ sourcetypes = "\n".join(get_sourcetypes())
 functions = [
     {
         "name": "splunk_query",
-        "description": "Use this function to query Splunk spl. Input should be a fully formed spl query. Search iteratively by first exploring the data and available fields. Do not assume all felids are correctly parsed.",
+        "description": "Use this function to query Splunk spl. Input should be a fully formed spl query. Search iteratively by first exploring the data and available fields. Do not assume all felids are correctly parsed. All data is in index botsv2",
         "parameters": {
             "type": "object",
             "properties": {
@@ -190,7 +210,6 @@ functions = [
                     "type": "string",
                     "description": f"""
                             SPL query extracting info to answer the user's question.
-                            It does not assume the leading search command, so this must be included if required.
                             Never use time selectors in the search, instead us the earliest_time and latest_time properties to set search windows.
                             Splunk has the following data sourcetypes available:
                                 
@@ -209,23 +228,23 @@ functions = [
             "required": ["query"],
         },
     },
-    {
-        "name": "get_fields",
-        "description": "Returns a json all availble felids in a sourcetype. The output contains the field name and coverage as a percentage, where 1 means all records have the field.",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "sourcetype": {
-                    "type": "string",
-                    "description": "The name of the sourcetype.",
-                },
-            },
-            "required": ["sourcetype"],
-        },
-    },
+    # {
+    #     "name": "get_fields",
+    #     "description": "Returns a json all availble felids in a sourcetype. The output contains the field name and coverage as a percentage, where 1 means all records have the field.",
+    #     "parameters": {
+    #         "type": "object",
+    #         "properties": {
+    #             "sourcetype": {
+    #                 "type": "string",
+    #                 "description": "The name of the sourcetype.",
+    #             },
+    #         },
+    #         "required": ["sourcetype"],
+    #     },
+    # },
 ]
 
 function_mapping={
     'splunk_query': splunk_query_json,
-    "get_fields": get_fields
+    # "get_fields": get_fields
 }

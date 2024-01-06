@@ -64,5 +64,11 @@ sense_check = autogen.AssistantAgent(
     llm_config=llm_config
 )
 
-groupchat = autogen.GroupChat(agents=[user_proxy, splunker, sense_check], messages=[], max_round=ROUNDS)
+chat_agents = [
+    user_proxy,
+    splunker,
+    sense_check
+]
+
+groupchat = autogen.GroupChat(agents=chat_agents, messages=[], max_round=ROUNDS)
 manager = autogen.GroupChatManager(groupchat=groupchat, llm_config=llm_config)
