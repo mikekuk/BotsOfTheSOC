@@ -4,7 +4,6 @@
 
 - Try function architecture.
 - Optimize system messages.
-- Reduce system messages to <= 2000 char.
 
 ## MemGPT
 

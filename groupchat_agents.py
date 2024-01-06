@@ -1,7 +1,6 @@
 import autogen
-from splunk_functions import splunk_query, get_fields, functions
+from splunk_functions import functions, function_mapping
 from system_messages import assistant_system_message, sense_checker_system_message, planner_system_message, assistant_system_message_short
-from prompt_functions import load_questions, get_prompts, extract_answer
 from config import MODEL, SEED, ROUNDS
 
 
@@ -38,10 +37,7 @@ user_proxy = autogen.UserProxyAgent(
 )
 
 user_proxy.register_function(
-    function_map={
-        'splunk_query': splunk_query,
-        "get_fields": get_fields
-    }
+    function_map=function_mapping
 )
 
 # create an AssistantAgent named "splunker"

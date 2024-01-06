@@ -15,8 +15,8 @@ logging.basicConfig(filename='splunk_log', level=logging.INFO, format='%(asctime
 INDEX = "botsv2"
 SPLUNK_HOST="localhost"
 SPLUNK_PORT="8089"
-MAX_CHAR_RETURN = 10000 # Sets the target max number of chars to return from Splunk for log results. This only effects results that exceed the max row count.
-MAX_ROW_RETRUN = 200 # Sets the max number of rows to return from Splunk
+MAX_CHAR_RETURN = 50000 # Sets the target max number of chars to return from Splunk for log results. This only effects results that exceed the max row count.
+MAX_ROW_RETURN = 200 # Sets the max number of rows to return from Splunk
 
 load_dotenv(".env")
 
@@ -33,7 +33,7 @@ service = connect(
 # Python helper functions
 
 
-def splunk_query(query, earliest_time="2017-07-31T20:15:00.000+00:00", latest_time="2017-08-31T18:00:00.000+00:00", dataframe=False, splunk_service=service):
+def splunk_query(query, earliest_time="2017-07-31T00:00:00.000+00:00", latest_time="2017-08-31T23:59:59.000+00:00", dataframe=False, splunk_service=service):
     """
     Execute a Splunk query and return the results as a pandas DataFrame.
 
@@ -72,7 +72,7 @@ def splunk_query(query, earliest_time="2017-07-31T20:15:00.000+00:00", latest_ti
         print(f"An error occurred: {e}")
     
     # Catch very large returns to save tokens
-    if len(df) > MAX_ROW_RETRUN:
+    if len(df) > MAX_ROW_RETURN:
         summary = df.describe(include='all')
         summary = summary.loc[['unique','top']].to_json()
         rows = 10
@@ -101,6 +101,66 @@ def splunk_query(query, earliest_time="2017-07-31T20:15:00.000+00:00", latest_ti
         return df
     else:
         return return_sting
+    
+
+def splunk_query_json(query: str, earliest_time:str="2017-07-31T20:15:00.000+00:00", latest_time:str="2017-08-31T23:59:59.000+00:00", splunk_service=service) -> str:
+    """
+    Execute a Splunk query and return the raw Splunk logs. The search prefix is not assumed, so add this if required.
+
+    Parameters:
+    - splunk_service: The authenticated Splunk service connection.
+    - query: The Splunk search query string.
+    - earliest_time: The earliest time for the search.
+    - latest_time: The latest time for the search.
+
+    Returns:
+    - Raw splunk logs or an error message.
+    """
+
+    try:
+        # Execute the query
+        job = splunk_service.jobs.create(query, earliest_time=earliest_time, latest_time=latest_time, exec_mode='blocking', count=0)
+
+        # Wait for the job to complete
+        job.refresh()
+        while not job.is_done():
+            pass
+
+        # Get the results and convert them to JSON
+        result_stream = job.results(output_mode='json', count=0)
+        _results_json = json.loads(result_stream.read().decode('utf-8'))
+
+        # Cleanup
+        job.cancel()
+
+        results_json = _results_json['results']
+        results_count = len(results_json)
+
+        # Handel searches with no results
+        if results_json == []:
+            return "Your search returned no results."
+        
+        # Handel searches with large numbers of results for token efficiency
+        if results_count > MAX_ROW_RETURN:
+            rows = 10
+            return f"Your search returned {len(results_json)} rows. Consider a more refined search. Here are the first {rows} results:\n {json.dumps(results_json[:rows])}"
+        
+        # Handel searches with high character count for token efficiency
+        while len(json.dumps(results_json)) > MAX_CHAR_RETURN and len(results_json) >=1:
+            results_json = results_json[-1]
+            if len(results_json) == 1:
+                return f"The search returned {results_count} results. Consider a more refined search. Here is this first result:\n{json.dumps(results_json)}"
+            else:
+                return f"The search returned {results_count} results. Consider a more refined search. Even the first is very long, so has been truncated to the first {MAX_CHAR_RETURN} characters:\n{json.dumps(results_json)}"
+
+        # Return the JSON results
+        return json.dumps(results_json)
+
+    except Exception as e:
+        # General error handling
+        return f"An error occurred: {str(e)}"
+
+
 
 with open(f"{INDEX}_splunk_field.json", "r") as f:
     raw_json = f.read()
@@ -130,7 +190,7 @@ functions = [
                     "type": "string",
                     "description": f"""
                             SPL query extracting info to answer the user's question.
-                            ALWAYS search index 'botsv2'. When first using a new sourcetype, start by exploring the possible fields.
+                            It does not assume the leading search command, so this must be included if required.
                             Never use time selectors in the search, instead us the earliest_time and latest_time properties to set search windows.
                             Splunk has the following data sourcetypes available:
                                 
@@ -164,3 +224,8 @@ functions = [
         },
     },
 ]
+
+function_mapping={
+    'splunk_query': splunk_query_json,
+    "get_fields": get_fields
+}
