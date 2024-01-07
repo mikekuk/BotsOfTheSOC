@@ -44,8 +44,9 @@ def get_results_json(query:str, earliest_time:str, latest_time:str, count:int=0)
         splunk_service = connect(
             host=SPLUNK_HOST,
             port=SPLUNK_PORT,
-            username=os.getenv('SPLUNK_UN'),
-            password=os.getenv('SPLUNK_PW')
+            username='admin' # For free license. Comment out, and uncomment the below two line if using the enterprise license.
+            # username=os.getenv('SPLUNK_UN'),
+            # password=os.getenv('SPLUNK_PW')
         )
 
         # Execute the query
@@ -83,7 +84,8 @@ def splunk_query(query: str, earliest_time:str="2017-07-31T20:15:00.000+00:00", 
         return f"An error occurred: {str(e)}"
     
     results_count = len(results_json)
-    pipe_count = len(query.split('|'))
+    split_query = query.split('|')
+    pipe_count = len(split_query)
 
     return_string = ""
     empty_results_return_string = "This search returned no results. If this is unexpected, try broadening your search to explore the data."
@@ -95,15 +97,17 @@ def splunk_query(query: str, earliest_time:str="2017-07-31T20:15:00.000+00:00", 
     # Handel searches with no results and multiple pipes by checking for the last pipe to return any results.
     elif results_count == 0 and pipe_count > 1:
         while results_count == 0 and pipe_count > 1:
-            split_query = query.split('|')
             query = '|'.join(split_query[:-1])
-            results_json = get_results_json(query, earliest_time, latest_time, count=10)
+            split_query = query.split('|')
+            pipe_count = len(split_query)
+            results_json = get_results_json(query, earliest_time, latest_time, count=50)
             results_count = len(results_json)
 
 
         if results_count == 0:
-            return f"{empty_results_return_string}. The first part of the search '{query}' also returned no results."
+            return f"{empty_results_return_string} The first part of the search '{query}' also returned no results."
         else:
+            reduced = True
             return_string = f"{empty_results_return_string} The last part of the search to return any results was '{query}'. "
 
     results_string = json.dumps(results_json)
@@ -129,7 +133,7 @@ def splunk_query(query: str, earliest_time:str="2017-07-31T20:15:00.000+00:00", 
     # Append an explainer if the results have been reduced.
     if reduced:
         reduced_json_count = len(results_json)
-        return_string += f"This search returned {results_count} results. Here are the first {reduced_json_count}:\n"
+        return_string += f"This search returned {results_count} results. Consider a more refined search. Here are the first {reduced_json_count} result:\n"
     
     # Add the final results and return.
     return_string += results_string
