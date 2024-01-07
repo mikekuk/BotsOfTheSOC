@@ -20,11 +20,6 @@ MAX_ROW_RETURN = 200 # Sets the max number of rows to return from Splunk
 
 load_dotenv(".env")
 
-
-# To use the function, you must first create a Splunk service connection:
-
-
-
 # Python helper functions
 
 def get_results_json(query:str, earliest_time:str, latest_time:str, count:int=0) -> list[dict]:
@@ -38,7 +33,6 @@ def get_results_json(query:str, earliest_time:str, latest_time:str, count:int=0)
         Returns:
         JSON completable List of dicts.
         """
-
 
         # Connect to Splunk
         splunk_service = connect(
@@ -66,7 +60,6 @@ def get_results_json(query:str, earliest_time:str, latest_time:str, count:int=0)
 
         results_json = _results_json['results']
         return results_json
-    
 
 def splunk_query(query: str, earliest_time:str="2017-07-31T20:15:00.000+00:00", latest_time:str="2017-08-31T23:59:59.000+00:00") -> str:
 
@@ -103,7 +96,6 @@ def splunk_query(query: str, earliest_time:str="2017-07-31T20:15:00.000+00:00", 
             results_json = get_results_json(query, earliest_time, latest_time, count=50)
             results_count = len(results_json)
 
-
         if results_count == 0:
             return f"{empty_results_return_string} The first part of the search '{query}' also returned no results."
         else:
@@ -119,7 +111,6 @@ def splunk_query(query: str, earliest_time:str="2017-07-31T20:15:00.000+00:00", 
         results_json = results_json[:MAX_ROW_RETURN]
         results_string = json.dumps(results_json)
         results_string_len = len(results_string)
-    
     
     # Handel long results within row limit.
     if results_string_len > MAX_CHAR_RETURN:
@@ -137,7 +128,6 @@ def splunk_query(query: str, earliest_time:str="2017-07-31T20:15:00.000+00:00", 
     
     # Add the final results and return.
     return_string += results_string
-
     return return_string
 
 
@@ -146,9 +136,9 @@ with open(f"{INDEX}_splunk_field.json", "r") as f:
 
 fields_dict= json.loads(raw_json)
 
-
 def get_sourcetypes():
     return list(fields_dict.keys())
+
 
 def get_fields(sourcetype):
     return fields_dict[sourcetype]
