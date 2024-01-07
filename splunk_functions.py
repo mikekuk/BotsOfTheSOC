@@ -22,108 +22,34 @@ load_dotenv(".env")
 
 
 # To use the function, you must first create a Splunk service connection:
-service = connect(
-    host=SPLUNK_HOST,
-    port=SPLUNK_PORT,
-    username=os.getenv('SPLUNK_UN'),
-    password=os.getenv('SPLUNK_PW')
-)
+
 
 
 # Python helper functions
 
+def get_results_json(query:str, earliest_time:str, latest_time:str, count:int=0) -> list[dict]:
+        
+        """
+        Executes splunk search and returns json.
 
-def splunk_query(query, earliest_time="2017-07-31T00:00:00.000+00:00", latest_time="2017-08-31T23:59:59.000+00:00", dataframe=False, splunk_service=service):
-    """
-    Execute a Splunk query and return the results as a pandas DataFrame.
+        Arguments:
+        SPL query, start time (format YYYY-MM-DDTHH:MM:SS.mmm+ZZ:ZZ), end time (same format), and the max number of search request to return (0 is all).
 
-    Parameters:
-    - splunk_service: The authenticated Splunk service connection.
-    - query: The Splunk search query string.
-    - earliest_time: The earliest time for the search.
-    - latest_time: The latest time for the search.
-
-    Returns:
-    - df: pandas DataFrame containing the results of the query.
-    """
-       # Log the function call with parameters and timestamp
-    log_entry = f"Query: {query}, Earliest Time: {earliest_time}, Latest Time: {latest_time}, Dataframe: {dataframe}, Splunk Service: {splunk_service}"
-    logging.info(log_entry)
-
-    # Run a one-shot search and return the results as a reader object
-    rr = splunk_service.jobs.export(
-        f"search {query}",
-        earliest_time=earliest_time,
-        latest_time=latest_time,
-        output_mode="csv"
-    )
-
-    # Use a StringIO object to convert byte stream to a string stream
-    csv_content = io.StringIO(rr.read().decode('utf-8'))
-
-    try:
-        df = pd.read_csv(csv_content)
-    except pd.errors.EmptyDataError:
-        # Catches empty search results
-        return "This search returned no results."
-        # Handle the error, for example, by initializing an empty DataFrame or taking some other action
-    except Exception as e:
-        # This will catch any other exceptions that are raised.
-        print(f"An error occurred: {e}")
-    
-    # Catch very large returns to save tokens
-    if len(df) > MAX_ROW_RETURN:
-        summary = df.describe(include='all')
-        summary = summary.loc[['unique','top']].to_json()
-        rows = 10
-        return_sting = f"Your search returned {len(df)} rows. Consider a more refined search. Here is a summary in JSON: \n{summary} and the first {rows} rows:\n {df.loc[:rows].to_string()}"
-        while len(return_sting) >= MAX_CHAR_RETURN:
-            # print(f"[+] Rows: {rows} - Len: {len(return_sting)}") # Used for debugging
-            rows -= 1
-            return_sting = f"Your search returned {len(df)} rows. Consider a more refined search. Here is a summary in JSON: \n{summary} and the first {rows} rows:\n {df.loc[:rows].to_string()}"
-            if rows == 1:
-                break
-    else:
-        return_sting = df.to_string()
+        Returns:
+        JSON completable List of dicts.
+        """
 
 
-    # Strip excess whitespace to save tokens.
-    return_sting = re.sub(r'\s{12,}', ' ', return_sting)
-    return_sting = "\n".join([line.rstrip() for line in return_sting.splitlines()])
+        # Connect to Splunk
+        splunk_service = connect(
+            host=SPLUNK_HOST,
+            port=SPLUNK_PORT,
+            username=os.getenv('SPLUNK_UN'),
+            password=os.getenv('SPLUNK_PW')
+        )
 
-
-    if len(return_sting) > MAX_CHAR_RETURN:
-        return_sting = f"The search returned a long result. This is truncated to the first {MAX_CHAR_RETURN} characters.\n\n {return_sting[:MAX_CHAR_RETURN]}"
-
-
-    if dataframe:
-        # Create a pandas DataFrame from the CSV content
-        return df
-    else:
-        return return_sting
-    
-
-def splunk_query_json(query: str, earliest_time:str="2017-07-31T20:15:00.000+00:00", latest_time:str="2017-08-31T23:59:59.000+00:00", splunk_service=service) -> str:
-    """
-    Execute a Splunk query and return the raw Splunk logs. The search prefix is not assumed, so add this if required.
-
-    Parameters:
-    - splunk_service: The authenticated Splunk service connection.
-    - query: The Splunk search query string.
-    - earliest_time: The earliest time for the search.
-    - latest_time: The latest time for the search.
-
-    Returns:
-    - Raw splunk logs or an error message.
-    """
-
-
-    if query[:7] != "search ":
-        query = "search " + query
-
-    try:
         # Execute the query
-        job = splunk_service.jobs.create(query, earliest_time=earliest_time, latest_time=latest_time, exec_mode='blocking', count=0)
+        job = splunk_service.jobs.create(query, earliest_time=earliest_time, latest_time=latest_time, exec_mode='blocking', count=count)
 
         # Wait for the job to complete
         job.refresh()
@@ -131,55 +57,84 @@ def splunk_query_json(query: str, earliest_time:str="2017-07-31T20:15:00.000+00:
             pass
 
         # Get the results and convert them to JSON
-        result_stream = job.results(output_mode='json', count=0)
+        result_stream = job.results(output_mode='json', count=count)
         _results_json = json.loads(result_stream.read().decode('utf-8'))
 
         # Cleanup
         job.cancel()
 
         results_json = _results_json['results']
-        results_count = len(results_json)
+        return results_json
+    
 
-        # Handel searches with no results
-        if results_json == []:
-            return "Your search returned no results. If this is unexpected, try broadening your search to explore the data."
-        
-        rows = 10
-        # Handel searches with large numbers of results for token efficiency
-        if results_count > MAX_ROW_RETURN:
+def splunk_query(query: str, earliest_time:str="2017-07-31T20:15:00.000+00:00", latest_time:str="2017-08-31T23:59:59.000+00:00") -> str:
 
-            results_json = results_json[:rows]
-            
-            # Handel large results with low row counts by gradually reducing the number of rows
-            if len(json.dumps(results_json[:rows])) > MAX_CHAR_RETURN:
-                while len(json.dumps(results_json)) > MAX_CHAR_RETURN and len(results_json) >=1:
-                    results_json = results_json[:-1]
-                rows = len(results_json)
-            
-            # Handel a single large result by truncating
-            if len(json.dumps(results_json)) > MAX_CHAR_RETURN and len(results_json) == 1:
-                return f"The search returned {results_count} results. Consider a more refined search. Even the first is very long, so has been truncated to the first {MAX_CHAR_RETURN} characters:\n{json.dumps(results_json)}"
-            
+    # Set reduced flag to track if the returned results has been redacted to save tokens.
+    reduced = False
 
-            return f"Your search returned {results_count} rows. Consider a more refined search. Here are the first {rows} results:\n {json.dumps(results_json[:rows])}"
-        
-        # Handel large results with low row counts by gradually reducing the number of rows
-        if len(json.dumps(results_json[:rows])) > MAX_CHAR_RETURN:
-            while len(json.dumps(results_json)) > MAX_CHAR_RETURN and len(results_json) >=1:
-                results_json = results_json[-1]
-            rows = len(results_json)
-            
-        # Handel a single large result by truncating
-        if len(json.dumps(results_json)) > MAX_CHAR_RETURN and len(results_json) == 1:
-            return f"The search returned {results_count} results. Consider a more refined search. Even the first is very long, so has been truncated to the first {MAX_CHAR_RETURN} characters:\n{json.dumps(results_json)}"
-
-        # Return the JSON results
-        return json.dumps(results_json)
-
+    # Append leading search if not present
+    if query[:7] != "search ":
+        query = "search " + query
+  
+    try:
+        results_json = get_results_json(query, earliest_time, latest_time)
     except Exception as e:
         # General error handling
         return f"An error occurred: {str(e)}"
+    
+    results_count = len(results_json)
+    pipe_count = len(query.split('|'))
 
+    return_string = ""
+    empty_results_return_string = "This search returned no results. If this is unexpected, try broadening your search to explore the data."
+
+    # Handel searches with no results and only one pipe
+    if results_count == 0 and pipe_count == 1:
+        return empty_results_return_string
+
+    # Handel searches with no results and multiple pipes by checking for the last pipe to return any results.
+    elif results_count == 0 and pipe_count > 1:
+        while results_count == 0 and pipe_count > 1:
+            split_query = query.split('|')
+            query = '|'.join(split_query[:-1])
+            results_json = get_results_json(query, earliest_time, latest_time, count=10)
+            results_count = len(results_json)
+
+
+        if results_count == 0:
+            return f"{empty_results_return_string}. The first part of the search '{query}' also returned no results."
+        else:
+            return_string = f"{empty_results_return_string} The last part of the search to return any results was '{query}'. "
+
+    results_string = json.dumps(results_json)
+    results_string_len = len(results_string)
+
+    # Handel results with too many rows.    
+    if results_count > MAX_ROW_RETURN:
+        reduced == True
+        results_json = results_json[:MAX_ROW_RETURN]
+        results_string = json.dumps(results_json)
+        results_string_len = len(results_string)
+    
+    
+    # Handel long results within row limit.
+    if results_string_len > MAX_CHAR_RETURN:
+        reduced = True
+        while results_string_len > MAX_CHAR_RETURN and len(results_json) > 1:
+            results_json = results_json[:-1]
+      
+    # Update string
+    results_string = json.dumps(results_json)
+
+    # Append an explainer if the results have been reduced.
+    if reduced:
+        reduced_json_count = len(results_json)
+        return_string += f"This search returned {results_count} results. Here are the first {reduced_json_count}:\n"
+    
+    # Add the final results and return.
+    return_string += results_string
+
+    return return_string
 
 
 with open(f"{INDEX}_splunk_field.json", "r") as f:
@@ -245,6 +200,6 @@ functions = [
 ]
 
 function_mapping={
-    'splunk_query': splunk_query_json,
+    'splunk_query': splunk_query,
     # "get_fields": get_fields
 }
