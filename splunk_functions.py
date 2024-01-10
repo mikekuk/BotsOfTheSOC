@@ -1,13 +1,11 @@
-import pandas as pd
 from splunklib.client import connect
 from splunklib.results import ResultsReader
-import io
 from dotenv import load_dotenv
-import os
 import json
 import logging
 from datetime import datetime
 import re
+from ai_functions import summarize_data
 
 # Configure the logging settings
 logging.basicConfig(filename='splunk_log', level=logging.INFO, format='%(asctime)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
@@ -15,7 +13,7 @@ logging.basicConfig(filename='splunk_log', level=logging.INFO, format='%(asctime
 INDEX = "botsv2"
 SPLUNK_HOST="localhost"
 SPLUNK_PORT="8089"
-MAX_CHAR_RETURN = 50000 # Sets the target max number of chars to return from Splunk for log results. This only effects results that exceed the max row count.
+MAX_CHAR_RETURN = 30000 # Sets the target max number of chars to return from Splunk for log results. This only effects results that exceed the max row count.
 MAX_ROW_RETURN = 200 # Sets the max number of rows to return from Splunk
 
 load_dotenv(".env")
@@ -117,9 +115,16 @@ def splunk_query(query: str, earliest_time:str="2017-07-31T20:15:00.000+00:00", 
         reduced = True
         while results_string_len > MAX_CHAR_RETURN and len(results_json) > 1:
             results_json = results_json[:-1]
+            results_string = json.dumps(results_json)
+            results_string_len = len(results_string)
       
     # Update string
     results_string = json.dumps(results_json)
+
+    # Handel long responses with GPT4 summarization
+    if len(results_string) > MAX_CHAR_RETURN:
+        _results_string = f"The data returned was over {MAX_CHAR_RETURN} characters long. It has been summarized below:\n"
+        results_string = _results_string + summarize_data(results_string)
 
     # Append an explainer if the results have been reduced.
     if reduced:
@@ -177,23 +182,23 @@ functions = [
             "required": ["query"],
         },
     },
-    # {
-    #     "name": "get_fields",
-    #     "description": "Returns a json all availble felids in a sourcetype. The output contains the field name and coverage as a percentage, where 1 means all records have the field.",
-    #     "parameters": {
-    #         "type": "object",
-    #         "properties": {
-    #             "sourcetype": {
-    #                 "type": "string",
-    #                 "description": "The name of the sourcetype.",
-    #             },
-    #         },
-    #         "required": ["sourcetype"],
-    #     },
-    # },
+    {
+        "name": "get_fields",
+        "description": "Returns a json all availble felids in a sourcetype. The output contains the field name and coverage as a percentage, where 1 means all records have the field.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "sourcetype": {
+                    "type": "string",
+                    "description": "The name of the sourcetype.",
+                },
+            },
+            "required": ["sourcetype"],
+        },
+    },
 ]
 
 function_mapping={
     'splunk_query': splunk_query,
-    # "get_fields": get_fields
+    "get_fields": get_fields
 }

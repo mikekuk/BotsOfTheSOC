@@ -27,7 +27,8 @@ def get_prompts(questions: list) -> tuple[list, list]:
     
     Example use: 
         questions = load_questions("Questions.json")
-        prompts, answers = get_prompt(questions)
+        questions = questions[series]
+        prompts, answers = get_prompts(questions)
     """
 
     def get_question(idx: int) -> str:
