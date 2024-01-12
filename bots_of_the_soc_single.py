@@ -3,19 +3,26 @@ import csv
 import os
 from autogen.token_count_utils import count_token
 from prompt_functions import load_questions, get_prompts, extract_answer
-from agents import groupchat, manager, user_proxy, splunker
+from agents import user_proxy, splunker
 from config import QUESTIONS, SERIES, LOG, SEED, MODEL
 from ai_functions import markerbot
 
+RUN_NAME = "single_agent_2024-01-12"
+
+run_name = f"{RUN_NAME}_Series-{SERIES}_Seed-{SEED}"
 
 questions = load_questions(QUESTIONS)
 questions = questions[SERIES]
 prompts, answers = get_prompts(questions)
 
+dir = f"runs/{run_name}"
+
+os.makedirs(dir, exist_ok=True)
+
 for i in range(len(prompts)):
 
     user_proxy.initiate_chat(
-        manager,
+        splunker,
         message=prompts[i],
     )
 
@@ -23,10 +30,10 @@ for i in range(len(prompts)):
 
     result = markerbot(answer, questions[i]['Answer'])
 
-    messages = groupchat.messages
+    messages = list(dict(user_proxy.chat_messages).values())[0]
     tokens = count_token(input=messages, model=MODEL)
 
-    with open(f"Message-Seed_{SEED}-Question_{questions[i]['Number']}.json", "w") as f:
+    with open(f"{dir}/Message-Seed_{SEED}-Question_{questions[i]['Number']}.json", "w") as f:
         f.write(json.dumps(messages))
 
     row_to_append = [questions[i]['Number'], SEED, result, questions[i]['Points'], questions[i]['Answer'], answer, tokens]
@@ -45,5 +52,3 @@ for i in range(len(prompts)):
         
         # Append the string as a new row
         csv_writer.writerow(row_to_append)
-
-    groupchat.reset()

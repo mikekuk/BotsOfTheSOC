@@ -1,6 +1,6 @@
 import autogen
 from splunk_functions import functions, function_mapping
-from system_messages import assistant_system_message, sense_checker_system_message, planner_system_message, assistant_system_message_short
+from system_messages import sense_checker_system_message, planner_system_message, assistant_system_message
 from config import MODEL, SEED, ROUNDS
 
 
@@ -26,7 +26,7 @@ llm_config={
 user_proxy = autogen.UserProxyAgent(
     name="user_proxy",
     human_input_mode="NEVER",
-    max_consecutive_auto_reply=15,
+    max_consecutive_auto_reply=10,
     is_termination_msg=lambda x: x.get("content", "") and x.get("content", "").rstrip().endswith("TERMINATE"),
     code_execution_config={
         "work_dir": "coding",
@@ -43,7 +43,7 @@ user_proxy.register_function(
 # create an AssistantAgent named "splunker"
 splunker = autogen.AssistantAgent(
     name="Splunk_analyst",
-    system_message = assistant_system_message_short,
+    system_message = assistant_system_message,
     llm_config={
         "seed": SEED,  # seed for caching and reproducibility
         "config_list": config_list,  # a list of OpenAI API configuration

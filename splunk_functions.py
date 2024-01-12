@@ -5,6 +5,7 @@ import json
 import logging
 from datetime import datetime
 import re
+import os
 from ai_functions import summarize_data
 
 # Configure the logging settings
@@ -156,7 +157,7 @@ sourcetypes = "\n".join(get_sourcetypes())
 functions = [
     {
         "name": "splunk_query",
-        "description": "Use this function to query Splunk spl. Input should be a fully formed spl query. Search iteratively by first exploring the data and available fields. Do not assume all felids are correctly parsed. All data is in index botsv2",
+        "description": f"Use this function to query Splunk spl. Input should be a fully formed spl query. Search iteratively by first exploring the data and available fields. Do not assume all felids are correctly parsed. All data is in index {INDEX}",
         "parameters": {
             "type": "object",
             "properties": {

@@ -64,11 +64,11 @@ def get_prompts(questions: list) -> tuple[list, list]:
             X_answer = get_answer(count)
             x_number = get_number(count)
 
-            background += f"\t{x_number} - {x_question}\n\tAnswer: {X_answer}\n"
+            background += f"{x_number} - {x_question}\nAnswer: {X_answer}\n"
             count +=1
         
         # Compile prompt
-        question_string = f"{background}\n\nTask: {get_number(idx)} - {get_question(idx)}\n\n{get_hint(idx)}"
+        question_string = f"{background}\n\nTask:{get_number(idx)} - {get_question(idx)}\n\n{get_hint(idx)}"
 
         return question_string
     

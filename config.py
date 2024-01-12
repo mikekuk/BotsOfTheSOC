@@ -1,6 +1,6 @@
 QUESTIONS = 'Questions.json'
-SERIES = 0
+SERIES = 1
 LOG = 'log.csv'
-SEED = 42
+SEED = 0
 MODEL = "gpt-4-1106-preview"
-ROUNDS = 30
+ROUNDS = 20
