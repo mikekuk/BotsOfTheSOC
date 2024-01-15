@@ -5,4 +5,20 @@ index,seed,result,points,answer_given,answer_correct,token_count
 201,0,False,15,45.77.65.211,172.31.10.10,574
 202,0,False,10,/member.php,/search.php,12524
 203,0,True,10,updatexml,UPDATEXML,32764
-204,0,False,20,gGsxysZL,,36259
+204,0,False,20,gGsxysZL,,36259200,0,False,10,52.42.208.228,The public IPv4 address of the server running www.brewertalk.com is 45.77.65.211.,301
+201,0,False,15,45.77.65.211,172.31.10.10,574
+202,0,False,10,/member.php,/search.php,12524
+200,0,False,10,52.42.208.228,The public IPv4 address of the server running www.brewertalk.com is 4.14.104.185.,5414
+201,0,False,15,45.77.65.211,172.31.10.10,574
+202,0,False,10,/member.php,/search.php,12524
+200,2,True,10,52.42.208.228,52.42.208.228,4241
+201,2,False,15,45.77.65.211,The IP address of the system used to run a web vulnerability scan against www.brewertalk.com is 172.31.10.10.,796
+202,2,True,10,/member.php,/member.php,21228
+203,2,True,10,updatexml,updatexml(),21886
+204,2,False,20,gGsxysZL,The password salt value for Frank Ester on www.brewertalk.com appears to be 'b3f1b68d1c412eddb79dc441497d59b'.,16066
+100,2,False,10,berkbeer.com,,61238
+101,2,False,10,Martin Berk,Unable to determine the CEO's name with the given data.,33418
+102,2,True,10,hbernhard@berkbeer.com,hbernhard@berkbeer.com,4583
+103,2,False,10,Saccharomyces_cerevisiae_patent.docx,,60085
+104,2,False,15,ambersthebest@yeastiebeastie.com,,31374
+105,2,True,15,7.0.4,7.0.4,17430

@@ -20,15 +20,18 @@ def get_response(system_message: str, prompt: str) -> str:
     return response.choices[0].message.content
 
 
-def markerbot(student: str, textbook: str) -> str:
+def markerbot(question: str, student: str, textbook: str) -> str:
     """
     Takes in student and text book answer and uses GPT4 for fuzzy matching to mark the answer.
+
+    Arguments:
+        Question, Student answer, Text book answer.
 
     Returns string ot "True" or "False".
     """
 
-    system_message = "Evaluate student answers against a textbook answer. Return True of correct and False if incorrect or no answer is given. Only reply True or False, never anything else."
-    string = f"Student answer: {str(student)}, Textbook: {textbook}"
+    system_message = "Evaluate student answers against a textbook answer. Return True of correct and False if incorrect or no answer is given. The answer does not need to match every character, as long as it is clear the student is on the right track. Only reply True or False, never anything else."
+    string = f"Question: {question}, Student answer: {str(student)}, Textbook: {textbook}"
 
     return get_response(system_message, string)
 

@@ -31,7 +31,7 @@
         {
             "Number": 104,
             "Question": "What is Amber's personal email address?",
-            "Hints": "Look for emails sent from Amber Turing.\nReview the body of emails that Amber has sent.\nReview the email with base64-encoded text for body (or content) and decode the base64.",
+            "Hints": "Look for emails sent from Amber Turing (aturing@froth.ly).\nReview the body of emails that Amber has sent.\nReview the email with base64-encoded text for body (or content) and decode the base64.",
             "Points": 15,
             "Answer": "ambersthebest@yeastiebeastie.com"
         },
@@ -47,7 +47,7 @@
         {
             "Number": 200,
             "Question": "What is the public IPv4 address of the server running www.brewertalk.com?",
-            "Hints": "A Splunk Stream forwarder running in the Frothly on-prem environment would observe http traffic destined for www.brewertalk.com as having an internet routable IP address.",
+            "Hints": "It is an internet routable IP address.",
             "Points": 10,
             "Answer": "52.42.208.228"
         },
@@ -75,14 +75,14 @@
         {
             "Number": 204,
             "Question": "What is Frank Ester's password salt value on www.brewertalk.com?",
-            "Hints": "Narrow down the events to only those that include the suspected SQL injection traffic. Stream HTTP events contain the details you need. Filter on the source IP, dest, IP, HTTP user agent and URI path.\nThese events will probably make a lot more sense if you reverse the Splunk event ordering by piping your search results to the reverse command. This will show you the first SQL injection commands at the top of the list and later events below.\n\nThere is a lot of data captured in these events. You are looking for two pieces of data in the dest_content field. The first can be found following the string 'XPATH syntax error: '\n\nThe other important piece of data in the dest_content field can be extracted with the following regular expression: '\n\nQuery:\n\t\\s+\n\t\\s+(?[^<]+)' Look for the sqli_query values that are stealing salt values.",
+            "Hints": "Narrow down the events to only those that include the suspected SQL injection traffic. Stream HTTP events contain the details you need. Filter on the source IP, dest, IP, HTTP user agent and URI path.\nThese events will probably make a lot more sense if you reverse the Splunk event ordering by piping your search results to the reverse command. This will show you the first SQL injection commands at the top of the list and later events below.\n\nThere is a lot of data captured in these events. You are looking for two pieces of data in the dest_content field. The first can be found following the string 'XPATH syntax error: '",
             "Points": 20,
             "Answer": "gGsxysZL"
         },
         {
             "Number": 207,
             "Question": "What was the value of the cookie that Kevin's browser transmitted to the malicious URL as part of a XSS attack? Answer guidance: All digits. Not the cookie name or symbols like an equal sign.",
-            "Hints": "Check out sourcetype=stream:htt\n\nInspect the uri_query field.",
+            "Hints": "Check out sourcetype=stream:http\n\nInspect the uri_query field.",
             "Points": 10,
             "Answer": "1502408189"
         },
@@ -105,7 +105,7 @@
         {
             "Number": 300,
             "Question": "According to Frothly's records, what is the likely MAC address of Mallory's corporate MacBook? Answer guidance: Her corporate MacBook has the hostname MACLORY-AIR13.",
-            "Hints": "Use Asset Center in ES.",
+            "Hints": "",
             "Points": 10,
             "Answer": "00:0c:29:f6:f3:ed"
         },

@@ -21,7 +21,7 @@ for i in range(len(prompts)):
 
     answer = extract_answer(splunker.last_message()["content"])
 
-    result = markerbot(answer, questions[i]['Answer'])
+    result = markerbot(questions[i]['Question'], answer, questions[i]['Answer'])
 
     messages = groupchat.messages
     tokens = count_token(input=messages, model=MODEL)
