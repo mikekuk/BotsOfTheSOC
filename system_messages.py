@@ -1,10 +1,5 @@
 from datetime import datetime
-
-
-START_DATE = "07/31/2017:20:15:00"
-END_DATE = "08/31/2017:18:00:00"
-SPLUNK_TIME_FORMAT = '%m/%d/%Y:%H:%M:%S'
-INDEX='botsv2'
+from config import START_DATE, END_DATE, SPLUNK_TIME_FORMAT, INDEX
 
 start_date = datetime.strptime(START_DATE, SPLUNK_TIME_FORMAT)
 end_date = datetime.strptime(END_DATE, SPLUNK_TIME_FORMAT)

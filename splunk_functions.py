@@ -7,21 +7,19 @@ from datetime import datetime
 import re
 import os
 from ai_functions import summarize_data
+from config import INDEX, SPLUNK_HOST, SPLUNK_PORT, MAX_CHAR_RETURN, MAX_ROW_RETURN, START_DATE, END_DATE
 
 # Configure the logging settings
 logging.basicConfig(filename='splunk_log', level=logging.INFO, format='%(asctime)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 
-INDEX = "botsv2"
-SPLUNK_HOST="localhost"
-SPLUNK_PORT="8089"
-MAX_CHAR_RETURN = 30000 # Sets the target max number of chars to return from Splunk for log results. This only effects results that exceed the max row count.
-MAX_ROW_RETURN = 200 # Sets the max number of rows to return from Splunk
-
 load_dotenv(".env")
+
+start_date = datetime.isoformat(START_DATE)
+end_date = datetime.isoformat(END_DATE)
 
 # Python helper functions
 
-def get_results_json(query:str, earliest_time:str, latest_time:str, count:int=0) -> list[dict]:
+def get_results_json(query:str, earliest_time:str = start_date, latest_time:str = end_date, count:int=0) -> list[dict]:
         
         """
         Executes splunk search and returns json.
@@ -60,13 +58,13 @@ def get_results_json(query:str, earliest_time:str, latest_time:str, count:int=0)
         results_json = _results_json['results']
         return results_json
 
-def splunk_query(query: str, earliest_time:str="2017-07-31T20:15:00.000+00:00", latest_time:str="2017-08-31T23:59:59.000+00:00") -> str:
+def splunk_query(query: str, earliest_time:str=start_date, latest_time:str=end_date) -> str:
 
     # Set reduced flag to track if the returned results has been redacted to save tokens.
     reduced = False
 
     # Append leading search if not present
-    if query[:7] != "search ":
+    if query[:7] not in ["search ", "tstats"]:
         query = "search " + query
   
     try:
