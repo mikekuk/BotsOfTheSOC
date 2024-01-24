@@ -14,12 +14,17 @@ logging.basicConfig(filename='splunk_log', level=logging.INFO, format='%(asctime
 
 load_dotenv(".env")
 
-start_date = datetime.isoformat(START_DATE)
-end_date = datetime.isoformat(END_DATE)
+start_date_obj = datetime.strptime(START_DATE, "%m/%d/%Y:%H:%M:%S")
+iso_start_date = start_date_obj.isoformat()
+
+end_date_obj = datetime.strptime(END_DATE, "%m/%d/%Y:%H:%M:%S")
+iso_end_date = end_date_obj.isoformat()
+
+splunk_base_commands = "splunk_commands.json"
 
 # Python helper functions
 
-def get_results_json(query:str, earliest_time:str = start_date, latest_time:str = end_date, count:int=0) -> list[dict]:
+def get_results_json(query:str, earliest_time:str = iso_start_date, latest_time:str = iso_end_date, count:int=0) -> list[dict]:
         
         """
         Executes splunk search and returns json.
@@ -55,10 +60,10 @@ def get_results_json(query:str, earliest_time:str = start_date, latest_time:str 
         # Cleanup
         job.cancel()
 
-        results_json = _results_json['results']
+        results_json = _results_json
         return results_json
 
-def splunk_query(query: str, earliest_time:str=start_date, latest_time:str=end_date) -> str:
+def splunk_query(query: str, earliest_time:str=iso_start_date, latest_time:str=iso_end_date) -> str:
 
     # Set reduced flag to track if the returned results has been redacted to save tokens.
     reduced = False
@@ -68,11 +73,16 @@ def splunk_query(query: str, earliest_time:str=start_date, latest_time:str=end_d
         query = "search " + query
   
     try:
-        results_json = get_results_json(query, earliest_time, latest_time)
+        responce_json = get_results_json(query, earliest_time, latest_time)
+        results_json = responce_json["results"]
+
     except Exception as e:
         # General error handling
         return f"An error occurred: {str(e)}"
-    
+    if 'fields' in responce_json.keys():
+        fields_str = "the following fields:\n" + "\n ".join([x["name"] for x in responce_json['fields']])
+    else:
+        fields_str = "no fields found"
     results_count = len(results_json)
     split_query = query.split('|')
     pipe_count = len(split_query)
@@ -90,7 +100,12 @@ def splunk_query(query: str, earliest_time:str=start_date, latest_time:str=end_d
             query = '|'.join(split_query[:-1])
             split_query = query.split('|')
             pipe_count = len(split_query)
-            results_json = get_results_json(query, earliest_time, latest_time, count=50)
+            responce_json = get_results_json(query, earliest_time, latest_time, count=50)
+            results_json = responce_json['results']
+            if 'fields' in responce_json.keys():
+                fields_str = "the following fields: " + "\n".join([x["name"] for x in responce_json['fields']])
+            else:
+                fields_str = "no fields found"
             results_count = len(results_json)
 
         if results_count == 0:
@@ -104,7 +119,7 @@ def splunk_query(query: str, earliest_time:str=start_date, latest_time:str=end_d
 
     # Handel results with too many rows.    
     if results_count > MAX_ROW_RETURN:
-        reduced == True
+        reduced = True
         results_json = results_json[:MAX_ROW_RETURN]
         results_string = json.dumps(results_json)
         results_string_len = len(results_string)
@@ -128,7 +143,7 @@ def splunk_query(query: str, earliest_time:str=start_date, latest_time:str=end_d
     # Append an explainer if the results have been reduced.
     if reduced:
         reduced_json_count = len(results_json)
-        return_string += f"This search returned {results_count} results. Consider a more refined search. Here are the first {reduced_json_count} result:\n"
+        return_string += f"This search returned {results_count} results with {fields_str}\nConsider a more refined search. Here are the first {reduced_json_count} results:\n"
     
     # Add the final results and return.
     return_string += results_string
@@ -140,13 +155,36 @@ with open(f"{INDEX}_splunk_field.json", "r") as f:
 
 fields_dict= json.loads(raw_json)
 
-def get_sourcetypes():
+def get_sourcetypes() -> list[str]:
     return list(fields_dict.keys())
 
-
-def get_fields(sourcetype):
+def get_fields(sourcetype) -> dict:
     return fields_dict[sourcetype]
 
+with open(splunk_base_commands, "r") as f:
+    commands = f.read()
+    commands = json.loads(commands)
+
+def list_commands() -> list[str]:
+    """
+    Lists all the base Splunk commands by name.
+
+    Returns a list of command names as strings
+    """
+    return [item["Command"] for item in commands] 
+
+def describe_command(command_name:str):
+    """
+    Describes a command.
+
+    Inputs the command name.
+
+    Returns a JSON dict of with details and an example.
+    """
+    for command in commands:
+        if command["Command"] == command_name:
+            return command
+    return "Command not found"
 
 # AutoGen functions
 
@@ -183,7 +221,7 @@ functions = [
     },
     {
         "name": "get_fields",
-        "description": "Returns a json all availble felids in a sourcetype. The output contains the field name and coverage as a percentage, where 1 means all records have the field.",
+        "description": "Returns a json all available felids in a sourcetype. The output contains the field name and coverage as a percentage, where 1 means all records have the field.",
         "parameters": {
             "type": "object",
             "properties": {
@@ -195,9 +233,32 @@ functions = [
             "required": ["sourcetype"],
         },
     },
+    # {
+    #     "name": "list_commands",
+    #     "description": "Lists all the available Splunk base commands.",
+    #     "parameters": {
+    #         "type: object"
+    #     },   
+    # },
+    {
+        "name": "describe_command",
+        "description": "Provides details and an example for a given command by name.",
+        "parameters":{
+            "type": "object",
+            "properties": {
+                "command_name": {
+                    "type": "string",
+                    "description": "The name of the command."
+                },
+            },
+            "required": ["command_name"]
+        }
+    }
 ]
 
 function_mapping={
-    'splunk_query': splunk_query,
-    "get_fields": get_fields
+    "splunk_query": splunk_query,
+    "get_fields": get_fields,
+    # "list_commands": list_commands,
+    "describe_command": describe_command
 }

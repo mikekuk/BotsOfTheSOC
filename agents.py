@@ -32,8 +32,8 @@ user_proxy = autogen.UserProxyAgent(
         "work_dir": "coding",
         "use_docker": False,  # set to True or image name like "python:3" to use docker
     },
-    # llm_config=llm_config_turbo,
-    system_message="A proxy capable of executing function calls only."
+    llm_config=llm_config,
+    system_message=sense_checker_system_message
 )
 
 user_proxy.register_function(

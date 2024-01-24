@@ -1,0 +1,137 @@
+[
+    {
+        "Command": "bin",
+        "Description": "Puts continuous numerical values into discrete sets, or bins.",
+        "Example": "Example:\nReturn the average for a field for a specific time span. Bin the search results using a 5 minute time span on the\n_time\nfield. Return the average\nthruput\nof each\nhost\nfor each 5 minute time span.\n...| bin span=5m _time | stats avg(thruput) by _time, host"
+    },
+    {
+        "Command": "branch",
+        "Description": "Processes one set of events or search results, in parallel, in two or more branches. Each branch must end with theintocommand.",
+        "Example": "Example:\nRead the events in the\nmain\nindex dataset into memory one time. Process the events in two branches using subsearches to determine the most popular hosts and sources.\n| from main \n    | branch  \n        [stats count() BY host \n           | where count > 50 select host \n           | into p_hosts], \n        [stats count() BY source \n           | where count > 100 select source \n           | into p_sources]"
+    },
+    {
+        "Command": "dedup",
+        "Description": "Removes the events that contain an identical combination of values for the fields that you specify.",
+        "Example": "Example:\nRemove duplicates of results with the same\nhost\nvalue.\n... | dedup host"
+    },
+    {
+        "Command": "eval",
+        "Description": "Calculates an expression and puts the resulting value into a search results field.",
+        "Example": "Example:\nCreate a new field that contains the result of a calculation. Create a new field called\nvelocity\nin each event. Calculate the velocity by dividing the values in the\ndistance\nfield by the values in the\ntime\nfield.\n... | eval velocity=distance/time\nExample:\nUse the\nif\nfunction to analyze field values. Create a new field called\nerror\nin each event. Using the if function, set the value in the error field to\nOK\nif  the status value is 200. Otherwise set the error field value to\nProblem\n.\n... | eval error = if(status == 200, \"OK\", \"Problem\")"
+    },
+    {
+        "Command": "eventstats",
+        "Description": "Generates summary statistics from fields in your events and saves those statistics into a new field.",
+        "Example": "Example:\nCalculate an average for each distinct value of the\ndate_minute\nfield. The new field\navgdur\nis added to each event with the average value based on its particular value of\ndate_minute\n.\n... | eventstats avg(duration) AS avgdur BY date_minute"
+    },
+    {
+        "Command": "fields",
+        "Description": "Keeps or removes fields from search results based on the list of fields that you specify.",
+        "Example": "Example:\nSpecify a list of fields to include in the search results. Return only the\nhost\nand\nsrc\nfields from the search results.\n... | fields host, src"
+    },
+    {
+        "Command": "fieldsummary",
+        "Description": "Calculates summary statistics for one or more fields in your events, displayed as a results table.",
+        "Example": "Example:\nReturn the summary statistics for all incoming fields.\n...| fieldsummary\nExample:\nReturn the summary statistics for a specific field.\n...| fieldsummary fields=[action]"
+    },
+    {
+        "Command": "from",
+        "Description": "Retrieves data from a dataset, such as an index, metric index, lookup, view, or job.Thefromcommand has a flexible syntax, which enables you to start a search with either theFROMclause or theSELECTclause.",
+        "Example": "Example:\nReturn data from the\nmain\nindex for the last 5 minutes. Group the results by host. Calculate the sum of the bytes field. Return the sum and the host fields where the sum of the bytes is greater than I MB.\n| FROM main \n      WHERE earliest=-5m@m AND latest=@m \n      GROUP BY host \n      SELECT sum(bytes) AS sum, host \n      HAVING sum > 1024*1024"
+    },
+    {
+        "Command": "head",
+        "Description": "Returns the first N number of specified results in search order.",
+        "Example": "Example:\nStop searching when a null value is encountered. This example returns results while\naction=purchase\nor the\naction\nfield does not exist in the results (\nnull=true\n). A maximum of 50 results are returned.\n...| head while (action=\"purchase\") null=true 50"
+    },
+    {
+        "Command": "into",
+        "Description": "Sends results to a dataset that is writable, a dataset sink. Appends or replaces the dataset sink in the search data pipeline.",
+        "Example": "Example:\nAppend the search results to the\nmytable\ndataset, which is a lookup kind of dataset.\n... | into mode=append mytable"
+    },
+    {
+        "Command": "join",
+        "Description": "Combines the results from two datasets by using one or more common fields.",
+        "Example": "Example:\nJoin datasets on fields that have the same name. Combine the results from a search with the\nvendors\ndataset. The data is joined on the\nproduct_id\nfield, which is common to both datasets.\n... | join left=L right=R where L.product_id=R.product_id vendors"
+    },
+    {
+        "Command": "lookup",
+        "Description": "Invokes field value lookups.",
+        "Example": "Example:\nPut corresponding information from a lookup dataset into your events.\nAppend the data returned from your search results with the data in the\nusers\nlookup dataset using the\nuid\nfield. For search results that contains a\nuid\nfield, the value in that field is matched with the\nuid\nfield in the\nusers\nlookup dataset. The\nusername\nand\ndepartment\nfields from the\nusers\nlookup dataset are appended to each search result. If the search results already have the\nusername\nand\ndepartment\nfields, the OUTPUTNEW argument only fills in missing values in those fields.\n... | lookup users uid OUTPUTNEW username, department"
+    },
+    {
+        "Command": "mvexpand",
+        "Description": "Expands the values of a multivalue field into separate events, one event for each value in the multivalue field.",
+        "Example": "Example:\nExpand the values in the\nmyfield\nfield.\n... | mvexpand myfield"
+    },
+    {
+        "Command": "rename",
+        "Description": "Renames one or more fields.",
+        "Example": "Example:\nRename a field with special characters. Rename the\nip-add\nfield to\nIPAddress\n. Field names that contain anything other than a-z, A-Z, 0-9, or \"_\", need single-quotation marks.\n... | rename 'ip-add' AS IPAddress"
+    },
+    {
+        "Command": "reverse",
+        "Description": "Reverses the order of the search results.",
+        "Example": "Example:\n... | reverse"
+    },
+    {
+        "Command": "rex",
+        "Description": "Use to either extract fields using regular expression named groups, or replace or substitute characters in a field using sed expressions.",
+        "Example": "Example:\nExtract values from a field using a <regex-expression>. Extract\nuser\n,\napp\n, and\nSavedSearchName\nfrom a field called\nsavedsearch_id\nin scheduler.log events.\n... | rex field=savedsearch_id \"(?<user>\\\\w+);(?<app>\\\\w+);(?<SavedSearchName>\\\\w+)\"\nIf the contents of the field is\nsavedsearch_id=bob;search;my_saved_search\nthen this\nrex\ncommand syntax extracts\nuser=bob\n,\napp=search\n, and\nSavedSearchName=my_saved_search\n."
+    },
+    {
+        "Command": "search",
+        "Description": "Retrieve events from indexes or filter the results of a previous search command in the pipeline.",
+        "Example": "Example:\nSearch for a field-value pair for a specific source IP,\nsrc\n.\nsearch src=\"192.0.2.0\"\nExample:\nSearch for multiple field-value pairs with boolean and comparison operators. This example searches for events with code values of either 10, 29, or 43 and any\nhost\nthat is not \"localhost\", and an\nxqp\nvalue that is greater than 5.\nsearch (code=10 OR code=29 OR code=43) host!=\"localhost\" xqp>5"
+    },
+    {
+        "Command": "select",
+        "Description": "See thefromcommand. The SELECT clause is part of thefromcommand.",
+        "Example": "Example:\nCalculate the sum of the bytes field. Return the sum and the host fields from the\nmain\nindex for the last 5 minutes. Group the results by host.\n| SELECT sum(bytes) AS sum, host \n      FROM main \n      WHERE earliest=-5m@m \n      GROUP BY host"
+    },
+    {
+        "Command": "sort",
+        "Description": "Sorts all of the results by the specified fields.",
+        "Example": "Example:\nSort the results first by the\nsurname\nfield in ascending order and then by the\nfirstname\nfield in descending order.\n... | sort surname, -firstname"
+    },
+    {
+        "Command": "spl1",
+        "Description": "Embed all or part of an SPL search into an SPL2 search.  Thespl1command supports two syntaxes: backtick ( ` ) character syntax and explicitspl1command syntax.",
+        "Example": "Example:\nConsider this SPL search:\nerror OR http_code=404\nEmbed this search into an SPL2 search using the backtick ( ` ) character syntax:\n`search index=main error OR http_code=404`\nExample:\nIn this SPL2 search only the portion of the search not supported by SPL2, the\naddinfo\ncommand, uses the backtick ( ` ) character syntax:\nfrom sample_data_index | stats sum(bytes) BY host | `addinfo`"
+    },
+    {
+        "Command": "stats",
+        "Description": "Calculates aggregate statistics such as average, count, and sum, over the results set.",
+        "Example": "Example:\nTake the incoming result set and calculate the\nsum\nof the\nbytes\nfield and groups the sums by the values in the\nhost\nfield.\n... | stats sum(bytes) BY host"
+    },
+    {
+        "Command": "streamstats",
+        "Description": "Adds a cumulative statistical value to each search result as each result is processed.",
+        "Example": "Example:\nUse a <by-clause> to add a running count to search results. This search uses the\nhost\nfield to reset the count. For each search result, a new field is appended with a count of the results based on the host value. The count is cumulative and includes the current result.\n... | streamstats count() BY host"
+    },
+    {
+        "Command": "thru",
+        "Description": "Writes data to a writeable dataset and then passes the same data to the next command in the search string. By default, the thru command appends data to the dataset.",
+        "Example": "Example:\nAppend all the incoming search result set to the\nactions\ndataset. Those same search results are also passed into the\neval\ncommand.\n... | thru actions | eval field=<expr>"
+    },
+    {
+        "Command": "timechart",
+        "Description": "Creates a time series chart with corresponding table of statistics.",
+        "Example": "Example:\nFor each minute, calculate the average value of the\nCPU\nfield for each\nhost\n.\n... | timechart span=1m avg(CPU) BY host"
+    },
+    {
+        "Command": "timewrap",
+        "Description": "Compare data over a specific time period, such as day-over-day or month-over-month, or multiple time periods, such as a two week period over another two week period.",
+        "Example": "Example:\nDisplay a timechart that has a span of 1 day for each count in a week over week comparison table. Each table column, which is the series, is 1 week of time.\n... | timechart count span=1d | timewrap 1week"
+    },
+    {
+        "Command": "union",
+        "Description": "Merges the results from two or more datasets into one dataset. One dataset can be piped into theunioncommand and merged with a second dataset.",
+        "Example": "Example:\nMerge events from the customers, orders, and vendors datasets. You must separate the dataset names with a comma.\n| union customers, orders, vendors\nExample:\nAppend the current results of the main search with the tabular results of errors from the subsearch.\n... | stats count() BY category1 | union [search error | stats count() BY category2]"
+    },
+    {
+        "Command": "where",
+        "Description": "Filters search results based on the outcome of a Boolean expression.",
+        "Example": "Example:\nUse the\nlike\ncomparison operator with the percent symbol (\u00a0% ) as a wildcard. This example returns all results where the\nipaddress\nfield contains values that start with \"192.\".\n... | where ipaddress like \"192.%\"\nExample:\nCompare one field to another field.\n... | where ipaddress=clientip\nExample:\nFilter using a field-value pair.\n... | where host=\"www1\""
+    }
+]

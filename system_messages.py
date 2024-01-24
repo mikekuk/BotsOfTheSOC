@@ -1,13 +1,17 @@
 from datetime import datetime
+from sourcetypes import sourcetypes
+from splunk_functions import list_commands
 from config import START_DATE, END_DATE, SPLUNK_TIME_FORMAT, INDEX
 
 start_date = datetime.strptime(START_DATE, SPLUNK_TIME_FORMAT)
 end_date = datetime.strptime(END_DATE, SPLUNK_TIME_FORMAT)
 
-scenario_message = f"This is a training scenario between {START_DATE} and {END_DATE} in time format {SPLUNK_TIME_FORMAT}."
+scenario_message = f"This is a training scenario between {START_DATE} and {END_DATE} in time format {SPLUNK_TIME_FORMAT}. You have the following sourcetypes:\n{sourcetypes}"
 
 assistant_system_message = f"""An expert SOC analyst assisting with an investigation. All this activity with HR and legal.
-Solve tasks using Splunk and language skills.
+Solve tasks using Splunk and language skills. Splunk has the following default commands available:
+
+{list_commands()}
 
 {scenario_message}
 
@@ -18,7 +22,7 @@ Don't include multiple code blocks in one response. Do not ask users to copy and
 If your query does not give you what you need, revisit your assumption, collect additional information, and think of a different approach.
 When you find an answer, reply Answer: followed by the answer. Verify the answer carefully. Include verifiable evidence in your response if possible.
 
-Reply with the answer and "TERMINATE" in the end when everything is done and you are satisfied. Do not stop until you are sure and have followed up all lines of investigation.
+Reply with the answer and "TERMINATE" when you have the final answer. Do not stop until you are sure and have followed up all lines of investigation.
 """
 
 

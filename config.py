@@ -1,6 +1,6 @@
-SERIES = 2
+SERIES = 1
 SEED = 2
-RUN_NAME = "single_agent_2024-01-15"
+RUN_NAME = "single_agent_2024-01-24"
 
 INDEX = "botsv2"
 START_DATE = "07/31/2017:20:15:00"

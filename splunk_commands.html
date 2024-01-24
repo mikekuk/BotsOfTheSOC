@@ -1,0 +1,342 @@
+<table>
+    <tbody><tr>
+    <th style="width: 13%">Command
+    </th>
+    <th style="width: 26%">Description
+    </th>
+    <th>Example
+    </th></tr>
+    <tr>
+    <td><a class="external text" href="http://docs.splunk.com/Documentation/SCS/current/SearchReference/BinCommandOverview">bin</a>
+    </td>
+    <td>Puts continuous numerical values into discrete sets, or bins.
+    </td>
+    <td><b>Example:</b> Return the average for a field for a specific time span. Bin the search results using a 5 minute time span on the <code>_time</code> field. Return the average <code>thruput</code> of each <code>host</code> for each 5 minute time span.
+    <p class="inlineQuery"><code>...| bin span=5m _time | stats avg(thruput) by _time, host</code></p>
+    </td></tr>
+    <tr>
+    <td><a class="external text" href="http://docs.splunk.com/Documentation/SCS/current/SearchReference/BranchCommandOverview">branch</a>
+    </td>
+    <td>Processes one set of events or search results, in parallel, in two or more branches. Each branch must end with the <code>into</code> command.
+    </td>
+    <td><b>Example:</b> Read the events in the <code>main</code> index dataset into memory one time. Process the events in two branches using subsearches to determine the most popular hosts and sources.
+    <p class="inlineQuery"><code><span>| from main 
+    | branch  
+        [stats count() BY host 
+           | where count &gt; 50 select host 
+           | into p_hosts], 
+        [stats count() BY source 
+           | where count &gt; 100 select source 
+           | into p_sources]</span></code></p>
+    </td></tr>
+    <tr>
+    <td><a class="external text" href="http://docs.splunk.com/Documentation/SCS/current/SearchReference/DedupCommandOverview">dedup</a>
+    </td>
+    <td>Removes the events that contain an identical combination of values for the fields that you specify.
+    </td>
+    <td><b>Example:</b> Remove duplicates of results with the same <code>host</code> value.
+    <p class="inlineQuery"><code>... | dedup host</code></p>
+    </td></tr>
+    <tr>
+    <td><a class="external text" href="http://docs.splunk.com/Documentation/SCS/current/SearchReference/EvalCommandOverview">eval</a>
+    </td>
+    <td>Calculates an expression and puts the resulting value into a search results field.
+    </td>
+    <td><b>Example:</b> Create a new field that contains the result of a calculation. Create a new field called <code>velocity</code> in each event. Calculate the velocity by dividing the values in the <code>distance</code> field by the values in the <code>time</code> field.
+    <p class="inlineQuery"><code>... | eval velocity=distance/time</code></p>
+    <p><br>
+    <b>Example:</b> Use the <code>if</code> function to analyze field values. Create a new field called <code>error</code> in each event. Using the if function, set the value in the error field to <code>OK</code> if  the status value is 200. Otherwise set the error field value to <code>Problem</code>.
+    </p>
+    <p class="inlineQuery"><code>... | eval error = if(status == 200, "OK", "Problem")</code></p>
+    </td></tr>
+    <tr>
+    <td><a class="external text" href="http://docs.splunk.com/Documentation/SCS/current/SearchReference/EventstatsCommandOverview">eventstats</a>
+    </td>
+    <td>Generates summary statistics from fields in your events and saves those statistics into a new field.
+    </td>
+    <td><b>Example:</b> Calculate an average for each distinct value of the <code>date_minute</code> field. The new field <code>avgdur</code> is added to each event with the average value based on its particular value of <code>date_minute</code>.
+    <p class="inlineQuery"><code>... | eventstats avg(duration) AS avgdur BY date_minute</code></p>
+    </td></tr>
+    <tr>
+    <td><a class="external text" href="http://docs.splunk.com/Documentation/SCS/current/SearchReference/ExpandCommandOverview">expand</a>
+    </td>
+    <td>Produce a separate result row for each object in an array that is in a field.
+    </td>
+    <td><b>Example:</b> Expand the array in the bridges field. Here is the event before the field is expanded:
+    <table class="search_results">
+    <tbody><tr>
+    <th style="width: 40%">_time
+    </th>
+    <th style="text-align:left;">bridges
+    </th></tr>
+    <tr>
+    <td>5 May 2021 2:29:02 PM
+    </td>
+    <td style="text-align:left;">[{"name":"Tower Bridge","length":801},{"name":"Millennium Bridge","length":1066}]
+    </td></tr></tbody></table>
+    <p class="inlineQuery"><code>... | expand bridges</code></p>
+    <p>Here are the results after the  <code>expand</code> command is run:
+    </p>
+    <table class="search_results">
+    <tbody><tr>
+    <th>_time
+    </th>
+    <th style="text-align:left;">bridges
+    </th></tr>
+    <tr>
+    <td>5 May 2021 2:29:02 PM
+    </td>
+    <td style="text-align:left;">{"name":"Tower Bridge","length":801}
+    </td></tr>
+    <tr>
+    <td>5 May 2021 2:29:02 PM
+    </td>
+    <td style="text-align:left;">{"name":"Millennium Bridge","length":1066}
+    </td></tr></tbody></table>
+    </td></tr>
+    <tr>
+    <td><a class="external text" href="http://docs.splunk.com/Documentation/SCS/current/SearchReference/FieldsCommandOverview">fields</a>
+    </td>
+    <td>Keeps or removes fields from search results based on the list of fields that you specify.
+    </td>
+    <td><b>Example:</b> Specify a list of fields to include in the search results. Return only the <code>host</code> and <code>src</code> fields from the search results.
+    <p class="inlineQuery"><code>... | fields host, src</code></p>
+    </td></tr>
+    <tr>
+    <td><a class="external text" href="http://docs.splunk.com/Documentation/SCS/current/SearchReference/FieldsummaryCommandOverview">fieldsummary</a>
+    </td>
+    <td>Calculates summary statistics for one or more fields in your events, displayed as a results table.
+    </td>
+    <td><b>Example:</b> Return the summary statistics for all incoming fields.
+    <p class="inlineQuery"><code>...| fieldsummary</code></p>
+    <p><br>
+    <b>Example:</b> Return the summary statistics for a specific field.
+    </p>
+    <p class="inlineQuery"><code>...| fieldsummary fields=[action]</code></p>
+    </td></tr>
+    <tr>
+    <td><a class="external text" href="http://docs.splunk.com/Documentation/SCS/current/SearchReference/FlattenCommandOverview">flatten</a>
+    </td>
+    <td>Converts the key-value pairs in the object into separate fields in an event. Flattens only the first level of an object.
+    </td>
+    <td><b>Example:</b> Flattens the values in the bridges object into separate fields.
+    <p class="inlineQuery"><code>| FROM [{}] SELECT _time, {name: "Tower Bridge", length: 801} as bridges | flatten bridges</code></p>
+    <p>The results look like this:
+    </p>
+    <table class="search_results">
+    <tbody><tr>
+    <th style="width: 25%">_time
+    </th>
+    <th style="width: 42%; text-align:left;">bridges
+    </th>
+    <th style="text-align:left;">length
+    </th>
+    <th style="text-align:left;">name
+    </th></tr>
+    <tr>
+    <td>21 Sep 2022 2:34:17 PM
+    </td>
+    <td style="text-align:left;">[{"name":"Tower Bridge", "length":801}]
+    </td>
+    <td style="text-align:left;">801
+    </td>
+    <td style="text-align:left;">Tower Bridge
+    </td></tr></tbody></table>
+    </td></tr>
+    <tr>
+    <td><a class="external text" href="http://docs.splunk.com/Documentation/SCS/current/SearchReference/FromCommandOverview">from</a>
+    </td>
+    <td>Retrieves data from a dataset, such as an index, metric index, lookup, view, or job.
+    <p>The <code>from</code> command has a flexible syntax, which enables you to start a search with either the <code>FROM</code> clause or the <code>SELECT</code> clause. 
+    </p>
+    </td>
+    <td><b>Example:</b> Return data from the <code>main</code> index for the last 5 minutes. Group the results by host. Calculate the sum of the bytes field. Return the sum and the host fields where the sum of the bytes is greater than I MB.
+    <p class="inlineQuery"><code><span>| FROM main 
+      WHERE earliest=-5m@m AND latest=@m 
+      GROUP BY host 
+      SELECT sum(bytes) AS sum, host 
+      HAVING sum &gt; 1024*1024</span></code></p>
+    </td></tr>
+    <tr>
+    <td><a class="external text" href="http://docs.splunk.com/Documentation/SCS/current/SearchReference/HeadCommandOverview">head</a>
+    </td>
+    <td>Returns the first N number of specified results in search order.
+    </td>
+    <td><b>Example:</b> Stop searching when a null value is encountered. This example returns results while <code>action=purchase</code> or the <code>action</code> field does not exist in the results (<code>null=true</code>). A maximum of 50 results are returned.
+    <p class="inlineQuery"><code>...| head while (action="purchase") null=true 50</code></p>
+    </td></tr>
+    <tr>
+    <td><a class="external text" href="http://docs.splunk.com/Documentation/SCS/current/SearchReference/IntoCommandOverview">into</a>
+    </td>
+    <td>Sends results to a dataset that is writable, a dataset sink. Appends or replaces the dataset sink in the search data pipeline.
+    </td>
+    <td><b>Example:</b> Append the search results to the <code>mytable</code> dataset, which is a lookup kind of dataset.
+    <p class="inlineQuery"><code>... | into mode=append mytable</code></p>
+    </td></tr>
+    <tr>
+    <td><a class="external text" href="http://docs.splunk.com/Documentation/SCS/current/SearchReference/JoinCommandOverview">join</a>
+    </td>
+    <td>Combines the results from two datasets by using one or more common fields.
+    </td>
+    <td><b>Example:</b> Join datasets on fields that have the same name. Combine the results from a search with the <code>vendors</code> dataset. The data is joined on the <code>product_id</code> field, which is common to both datasets.
+    <p class="inlineQuery"><code>... | join left=L right=R where L.product_id=R.product_id vendors</code></p>
+    </td></tr>
+    <tr>
+    <td><a class="external text" href="http://docs.splunk.com/Documentation/SCS/current/SearchReference/LookupCommandOverview">lookup</a>
+    </td>
+    <td>Invokes field value lookups.
+    </td>
+    <td><b>Example:</b> Put corresponding information from a lookup dataset into your events.
+    <p>Append the data returned from your search results with the data in the <code>users</code> lookup dataset using the <code>uid</code> field. For search results that contains a <code>uid</code> field, the value in that field is matched with the <code>uid</code> field in the <code>users</code> lookup dataset. The <code>username</code> and <code>department</code> fields from the <code>users</code> lookup dataset are appended to each search result. If the search results already have the <code>username</code> and <code>department</code> fields, the OUTPUTNEW argument only fills in missing values in those fields.
+    </p>
+    <p class="inlineQuery"><code>... | lookup users uid OUTPUTNEW username, department</code></p>
+    </td></tr>
+    <tr>
+    <td><a class="external text" href="http://docs.splunk.com/Documentation/SCS/current/SearchReference/MvexpandCommandOverview">mvexpand</a>
+    </td>
+    <td>Expands the values of a multivalue field into separate events, one event for each value in the multivalue field.
+    </td>
+    <td><b>Example:</b> Expand the values in the <code>myfield</code> field.
+    <p class="inlineQuery"><code>... | mvexpand myfield</code></p>
+    </td></tr>
+    <tr>
+    <td><a class="external text" href="http://docs.splunk.com/Documentation/SCS/current/SearchReference/RenameCommandOverview">rename</a>
+    </td>
+    <td>Renames one or more fields.
+    </td>
+    <td><b>Example:</b> Rename a field with special characters. Rename the <code>ip-add</code> field to <code>IPAddress</code>. Field names that contain anything other than a-z, A-Z, 0-9, or "_", need single-quotation marks.
+    <p class="inlineQuery"><code>... | rename 'ip-add' AS IPAddress</code></p>
+    </td></tr>
+    <tr>
+    <td><a class="external text" href="http://docs.splunk.com/Documentation/SCS/current/SearchReference/ReverseCommandOverview">reverse</a>
+    </td>
+    <td>Reverses the order of the search results.
+    </td>
+    <td><b>Example:</b>
+    <p class="inlineQuery"><code>... | reverse</code></p>
+    </td></tr>
+    <tr>
+    <td><a class="external text" href="http://docs.splunk.com/Documentation/SCS/current/SearchReference/RexCommandOverview">rex</a>
+    </td>
+    <td>Use to either extract fields using regular expression named groups, or replace or substitute characters in a field using sed expressions.
+    </td>
+    <td><b>Example:</b> Extract values from a field using a &lt;regex-expression&gt;. Extract <code>user</code>, <code>app</code>, and <code>SavedSearchName</code> from a field called <code>savedsearch_id</code> in scheduler.log events.
+    <p class="inlineQuery"><code>... | rex field=savedsearch_id "(?&lt;user&gt;\\w+);(?&lt;app&gt;\\w+);(?&lt;SavedSearchName&gt;\\w+)"</code></p>
+    <p>If the contents of the field is <code>savedsearch_id=bob;search;my_saved_search</code> then this <code>rex</code> command syntax extracts 
+    <code>user=bob</code>, <code>app=search</code>, and <code>SavedSearchName=my_saved_search</code>.
+    </p>
+    </td></tr>
+    <tr>
+    <td><a class="external text" href="http://docs.splunk.com/Documentation/SCS/current/SearchReference/SearchCommandOverview">search</a>
+    </td>
+    <td>Retrieve events from indexes or filter the results of a previous search command in the pipeline.
+    </td>
+    <td><b>Example:</b> Search for a field-value pair for a specific source IP, <code>src</code>.
+    <p class="inlineQuery"><code>search src="192.0.2.0"</code></p>
+    <p><br>
+    <b>Example:</b> Search for multiple field-value pairs with boolean and comparison operators. This example searches for events with code values of either 10, 29, or 43 and any <code>host</code> that is not "localhost", and an <code>xqp</code> value that is greater than 5.
+    </p>
+    <p class="inlineQuery"><code>search (code=10 OR code=29 OR code=43) host!="localhost" xqp&gt;5</code></p>
+    </td></tr>
+    <tr>
+    <td>select
+    </td>
+    <td>See the <a class="external text" href="http://docs.splunk.com/Documentation/SCS/current/SearchReference/FromCommandOverview">from</a> command. The SELECT clause is part of the <code>from</code> command.
+    </td>
+    <td><b>Example:</b> Calculate the sum of the bytes field. Return the sum and the host fields from the <code>main</code> index for the last 5 minutes. Group the results by host.
+    <p class="inlineQuery"><code><span>| SELECT sum(bytes) AS sum, host 
+      FROM main 
+      WHERE earliest=-5m@m 
+      GROUP BY host</span></code></p>
+    </td></tr>
+    <tr>
+    <td><a class="external text" href="http://docs.splunk.com/Documentation/SCS/current/SearchReference/SortCommandOverview">sort</a>
+    </td>
+    <td>Sorts all of the results by the specified fields.
+    </td>
+    <td><b>Example:</b> Sort the results first by the <code>surname</code> field in ascending order and then by the <code>firstname</code>  field in descending order.
+    <p class="inlineQuery"><code>... | sort surname, -firstname</code></p>
+    </td></tr>
+    <tr>
+    <td><a class="external text" href="http://docs.splunk.com/Documentation/SCS/current/SearchReference/spl1CommandOverview">spl1</a>
+    </td>
+    <td>Embed all or part of an SPL search into an SPL2 search.  The <code>spl1</code> command supports two syntaxes: backtick ( ` ) character syntax and explicit <code>spl1</code> command syntax.
+    </td>
+    <td><b>Example:</b> Consider this SPL search:
+    <p class="inlineQuery"><code>error OR http_code=404</code></p> 
+    <p>Embed this search into an SPL2 search using the backtick ( ` ) character syntax: 
+    </p>
+    <p class="inlineQuery"><code>`search index=main error OR http_code=404`</code></p>
+    <p><br>
+    <b>Example:</b> In this SPL2 search only the portion of the search not supported by SPL2, the <code>addinfo</code> command, uses the backtick ( ` ) character syntax:
+    </p>
+    <p class="inlineQuery"><code>from sample_data_index | stats sum(bytes) BY host | `addinfo`</code></p>
+    </td></tr>
+    <tr>
+    <td><a class="external text" href="http://docs.splunk.com/Documentation/SCS/current/SearchReference/StatsCommandOverview">stats</a>
+    </td>
+    <td>Calculates aggregate statistics such as average, count, and sum, over the results set.
+    </td>
+    <td><b>Example:</b> Take the incoming result set and calculate the <code>sum</code> of the <code>bytes</code> field and groups the sums by the values in the <code>host</code> field.
+    <p class="inlineQuery"><code>... | stats sum(bytes) BY host</code></p>
+    </td></tr>
+    <tr>
+    <td><a class="external text" href="http://docs.splunk.com/Documentation/SCS/current/SearchReference/StreamstatsCommandOverview">streamstats</a>
+    </td>
+    <td>Adds a cumulative statistical value to each search result as each result is processed.
+    </td>
+    <td><b>Example:</b> Use a &lt;by-clause&gt; to add a running count to search results. This search uses the <code>host</code> field to reset the count. For each search result, a new field is appended with a count of the results based on the host value. The count is cumulative and includes the current result.
+    <p class="inlineQuery"><code>... | streamstats count() BY host</code></p>
+    </td></tr>
+    <tr>
+    <td><a class="external text" href="http://docs.splunk.com/Documentation/SCS/current/SearchReference/ThruCommandOverview">thru</a>
+    </td>
+    <td>Writes data to a writeable dataset and then passes the same data to the next command in the search string. By default, the thru command appends data to the dataset.
+    </td>
+    <td><b>Example:</b> Append all the incoming search result set to the <code>actions</code> dataset. Those same search results are also passed into the <code>eval</code> command.
+    <p class="inlineQuery"><code>... | thru actions | eval field=&lt;expr&gt;</code></p>
+    </td></tr>
+    <tr>
+    <td><a class="external text" href="http://docs.splunk.com/Documentation/SCS/current/SearchReference/TimechartCommandOverview">timechart</a>
+    </td>
+    <td>Creates a time series chart with corresponding table of statistics.
+    </td>
+    <td><b>Example:</b> For each minute, calculate the average value of the <code>CPU</code> field for each <code>host</code>.
+    <p class="inlineQuery"><code>... | timechart span=1m avg(CPU) BY host</code></p>
+    </td></tr>
+    <tr>
+    <td><a class="external text" href="http://docs.splunk.com/Documentation/SCS/current/SearchReference/TimewrapCommandOverview">timewrap</a>
+    </td>
+    <td>Compare data over a specific time period, such as day-over-day or month-over-month, or multiple time periods, such as a two week period over another two week period.
+    </td>
+    <td><b>Example:</b> Display a timechart that has a span of 1 day for each count in a week over week comparison table. Each table column, which is the series, is 1 week of time.
+    <p class="inlineQuery"><code>... | timechart count span=1d | timewrap 1week</code></p>
+    </td></tr>
+    <tr>
+    <td><a class="external text" href="http://docs.splunk.com/Documentation/SCS/current/SearchReference/UnionCommandOverview">union</a>
+    </td>
+    <td>Merges the results from two or more datasets into one dataset. One dataset can be piped into the <code>union</code> command and merged with a second dataset.
+    </td>
+    <td><b>Example:</b> Merge events from the customers, orders, and vendors datasets. You must separate the dataset names with a comma.
+    <p class="inlineQuery"><code>| union customers, orders, vendors</code></p>
+    <p><br>
+    <b>Example:</b> Append the current results of the main search with the tabular results of errors from the subsearch.
+    </p>
+    <p class="inlineQuery"><code>... | stats count() BY category1 | union [search error | stats count() BY category2]</code></p>
+    </td></tr>
+    <tr>
+    <td><a class="external text" href="http://docs.splunk.com/Documentation/SCS/current/SearchReference/WhereCommandOverview">where</a>
+    </td>
+    <td>Filters search results based on the outcome of a Boolean expression.
+    </td>
+    <td><b>Example:</b> Use the <code>like</code> comparison operator with the percent symbol (&nbsp;% ) as a wildcard. This example returns all results where the <code>ipaddress</code> field contains values that start with "192.".
+    <p class="inlineQuery"><code>... | where ipaddress like "192.%"</code></p>
+    <p><br>
+    <b>Example:</b> Compare one field to another field. 
+    </p>
+    <p class="inlineQuery"><code>... | where ipaddress=clientip</code></p>
+    <p><br>
+    <b>Example:</b> Filter using a field-value pair. 
+    </p>
+    <p class="inlineQuery"><code>... | where host="www1"</code></p>
+    </td></tr></tbody></table>
