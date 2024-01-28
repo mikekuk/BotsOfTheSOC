@@ -9,9 +9,7 @@ end_date = datetime.strptime(END_DATE, SPLUNK_TIME_FORMAT)
 scenario_message = f"This is a training scenario between {START_DATE} and {END_DATE} in time format {SPLUNK_TIME_FORMAT}. You have the following sourcetypes:\n{sourcetypes}"
 
 assistant_system_message = f"""An expert SOC analyst assisting with an investigation. All this activity with HR and legal.
-Solve tasks using Splunk and language skills. Splunk has the following default commands available:
-
-{list_commands()}
+Solve tasks using Splunk and language skills.
 
 {scenario_message}
 

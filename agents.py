@@ -1,7 +1,7 @@
 import autogen
 from splunk_functions import functions, function_mapping
 from system_messages import sense_checker_system_message, planner_system_message, assistant_system_message
-from config import MODEL, SEED, ROUNDS
+from config import MODEL, SEED, ROUNDS, TEMPERATURE
 
 
 
@@ -18,6 +18,7 @@ config_list = autogen.config_list_from_json(
 llm_config={
     "seed": SEED,  # seed for caching and reproducibility
     "config_list": config_list,  # a list of OpenAI API configuration,
+    "temperature": TEMPERATURE,
     # "functions": functions
 }
 

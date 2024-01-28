@@ -6,7 +6,7 @@ import logging
 from datetime import datetime
 import re
 import os
-from ai_functions import summarize_data
+from ai_functions import summarize_data, get_response
 from config import INDEX, SPLUNK_HOST, SPLUNK_PORT, MAX_CHAR_RETURN, MAX_ROW_RETURN, START_DATE, END_DATE
 
 # Configure the logging settings
@@ -23,6 +23,14 @@ iso_end_date = end_date_obj.isoformat()
 splunk_base_commands = "splunk_commands.json"
 
 # Python helper functions
+
+def debug_query(query: str, error_msg: str) -> str:
+    """
+    Calls GPT-4 to try and debug an error.
+    """
+    prompt = f"I am trying the following Splunk query via a python function calling the API: {query}\nI get this error: {error_msg}\nJust explain the error in the query and suggest a fix. I cannot edit the python code."
+    response = get_response("A helpful AI assistant", prompt)
+    return response
 
 def get_results_json(query:str, earliest_time:str = iso_start_date, latest_time:str = iso_end_date, count:int=0) -> list[dict]:
         
@@ -70,7 +78,7 @@ def splunk_query(query: str, earliest_time:str=iso_start_date, latest_time:str=i
 
     # Append leading search if not present
     if query[:7] not in ["search ", "tstats"]:
-        query = "search " + query
+        query = f'search {query}'
   
     try:
         responce_json = get_results_json(query, earliest_time, latest_time)
@@ -78,7 +86,8 @@ def splunk_query(query: str, earliest_time:str=iso_start_date, latest_time:str=i
 
     except Exception as e:
         # General error handling
-        return f"An error occurred: {str(e)}"
+        error_msg = str(e)
+        return f"The query returned an error: {error_msg}.\n {debug_query(query, error_msg)}"
     if 'fields' in responce_json.keys():
         fields_str = "the following fields:\n" + "\n ".join([x["name"] for x in responce_json['fields']])
     else:
@@ -219,27 +228,29 @@ functions = [
             "required": ["query"],
         },
     },
+    # {
+    #     "name": "get_fields",
+    #     "description": "Returns a json all available felids in a sourcetype. The output contains the field name and coverage as a percentage, where 1 means all records have the field.",
+    #     "parameters": {
+    #         "type": "object",
+    #         "properties": {
+    #             "sourcetype": {
+    #                 "type": "string",
+    #                 "description": "The name of the sourcetype.",
+    #             },
+    #         },
+    #         "required": ["sourcetype"],
+    #     },
+    # },
     {
-        "name": "get_fields",
-        "description": "Returns a json all available felids in a sourcetype. The output contains the field name and coverage as a percentage, where 1 means all records have the field.",
-        "parameters": {
+        "name": "list_commands",
+        "description": "Lists all the available Splunk base commands.",
+        "parameters":{
             "type": "object",
-            "properties": {
-                "sourcetype": {
-                    "type": "string",
-                    "description": "The name of the sourcetype.",
-                },
-            },
-            "required": ["sourcetype"],
+            "properties": {},
+            "required": []
         },
     },
-    # {
-    #     "name": "list_commands",
-    #     "description": "Lists all the available Splunk base commands.",
-    #     "parameters": {
-    #         "type: object"
-    #     },   
-    # },
     {
         "name": "describe_command",
         "description": "Provides details and an example for a given command by name.",
@@ -258,7 +269,7 @@ functions = [
 
 function_mapping={
     "splunk_query": splunk_query,
-    "get_fields": get_fields,
-    # "list_commands": list_commands,
+    # "get_fields": get_fields,
+    "list_commands": list_commands,
     "describe_command": describe_command
 }

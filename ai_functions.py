@@ -1,6 +1,8 @@
 import dotenv
 import os
 from openai import OpenAI
+from config import MODEL
+
 
 
 dotenv.load_dotenv(".env")
@@ -11,7 +13,7 @@ client = OpenAI(api_key=key)
 def get_response(system_message: str, prompt: str) -> str:
     "Gets a one short response from GPT-4 with system message and prompt."
     response = client.chat.completions.create(
-        model="gpt-4-1106-preview",
+        model=MODEL,
         messages=[
             {"role": "system", "content": system_message},
             {"role": "user", "content": prompt},
@@ -41,3 +43,4 @@ def summarize_data(data:str) -> str:
     """
     system_message = "You are a helpful AI security operations assistant. Summarize this data and provide all key insights. ALWAYS include a summary of the data structure and all field names. Sum up any human readable sections in the data."
     return get_response(system_message, data)
+
