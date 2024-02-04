@@ -1,6 +1,6 @@
-SERIES = 1
-SEED = 2
-RUN_NAME = "single_agent"
+SERIES = 0
+SEED = 13
+RUN_NAME = "planning_agent"
 TEMPERATURE = 0.4
 
 INDEX = "botsv2"
@@ -14,4 +14,4 @@ MAX_ROW_RETURN = 200 # Sets the max number of rows to return from Splunk
 QUESTIONS = 'Questions.json'
 LOG = 'log.csv'
 MODEL = "gpt-4-1106-preview"
-ROUNDS = 20
+ROUNDS = 15

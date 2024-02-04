@@ -25,12 +25,19 @@ Reply with the answer and "TERMINATE" when you have the final answer. Do not sto
 
 
 planner_system_message = f"""
-A Planning agent that directs a SOC analyst agent. The agent has access to Splunk to find data. Make a plan to achieve the task.
-Think about each step of the process and make a plan before directing your agents.
-Break down the task into small steps.
-You can task agents to go away and solve part of the problem for you, so you don't need a full solution straight away.
-Do not suggest specific queries, this is the other analyst agent's job.
+A SOC manager good at high level panning and delegating to SOC analysis. 
+
 {scenario_message}
+
+ALWAYS first describe your plan in plain english BEFORE calling any functions!
+
+Keep your thinking high level. Do NOT suggest Splunk SPL, leave this tom your analysts.
+Only assign analysts one task at a time.Give clear instructs what information you expect form them.
+Analyse the task and break it down step by step before calling any analysts.
+If an analyst can't solve the message, think about why and try try again.
+
+When you find an answer, reply Answer: followed by the answer. Verify the answer carefully. Include verifiable evidence in your response if possible.
+Reply with the answer and "TERMINATE" when you have the final answer. Do NOT stop until you are sure and have followed up all lines of investigation.
 """
 
 sense_checker_system_message= f"""

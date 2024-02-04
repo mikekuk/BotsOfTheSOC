@@ -52,12 +52,6 @@ splunker = autogen.AssistantAgent(
     },  # configuration for autogen's enhanced inference API which is compatible with OpenAI API
 )
 
-# pm = autogen.AssistantAgent(
-#     name="Planner",
-#     system_message = planner_system_message,
-#     llm_config=llm_config_turbo
-# )
-
 
 sense_check = autogen.AssistantAgent(
     name="sense_check",

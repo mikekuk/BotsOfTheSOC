@@ -45,10 +45,10 @@ if __name__ == "__main__":
         with open(f"{dir}/Message-Seed_{SEED}-Question_{questions[i]['Number']}.json", "w") as f:
             f.write(json.dumps(messages))
 
-        row_to_append = [questions[i]['Number'], SEED, result, questions[i]['Points'], questions[i]['Answer'], answer.replace("\n", "\t").replace(",", ";"), tokens]
+        row_to_append = [questions[i]['Number'], SEED, result, questions[i]['Points'], questions[i]['Answer'], str(answer).replace("\n", "\t").replace(",", ";"), tokens]
 
             # Check if the file exists
-        if not os.path.exists(LOG):
+        if not os.path.exists(log):
             # If the file doesn't exist, create it and write the header row (if needed)
             with open(log, 'w', newline='') as csvfile:
                 csv_writer = csv.writer(csvfile)
