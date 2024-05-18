@@ -1,0 +1,60 @@
+index=botsv2 sourcetype=stream:smtp
+| spath input=_raw path=content_body
+| spath input=_raw path=content_transfer_encoding
+| spath input=_raw path=content_type
+| spath input=_raw path=endtime
+| spath input=_raw path=timestamp
+| spath input=_raw path=ack_packets_in
+| spath input=_raw path=ack_packets_out
+| spath input=_raw path=bytes
+| spath input=_raw path=bytes_in
+| spath input=_raw path=bytes_out
+| spath input=_raw path=capture_hostname
+| spath input=_raw path=client_rtt
+| spath input=_raw path=client_rtt_packets
+| spath input=_raw path=client_rtt_sum
+| spath input=_raw path=data_packets_in
+| spath input=_raw path=data_packets_out
+| spath input=_raw path=date
+| spath input=_raw path=dest_ip
+| spath input=_raw path=dest_mac
+| spath input=_raw path=dest_port
+| spath input=_raw path=duplicate_packets_in
+| spath input=_raw path=duplicate_packets_out
+| spath input=_raw path=flow_id
+| spath input=_raw path=mime_type
+| spath input=_raw path=mime_version
+| spath input=_raw path=missing_packets_in
+| spath input=_raw path=missing_packets_out
+| spath input=_raw path=msg_id
+| spath input=_raw path=network_interface
+| spath input=_raw path=packets_in
+| spath input=_raw path=packets_out
+| spath input=_raw path=protocol_stack
+
+| spath input=_raw path=receiver{} output=receiver
+| spath input=_raw path=received_by_name{} output=received_by_name
+| spath input=_raw path=received_date{} output=received_date
+| spath input=_raw path=received_with{} output=received_with
+| spath input=_raw path=receiver_email{} output=receiver_email
+| spath input=_raw path=receiver_type{} output=receiver_type
+
+| spath input=_raw path=reply_time
+| spath input=_raw path=request_ack_time
+| spath input=_raw path=request_time
+| spath input=_raw path=response_ack_time
+| spath input=_raw path=response_code
+| spath input=_raw path=response_time
+| spath input=_raw path=sender
+| spath input=_raw path=sender_alias
+| spath input=_raw path=sender_email
+| spath input=_raw path=server_response
+| spath input=_raw path=server_rtt
+| spath input=_raw path=server_rtt_packets
+| spath input=_raw path=server_rtt_sum
+| spath input=_raw path=src_ip
+| spath input=_raw path=src_mac
+| spath input=_raw path=src_port
+| spath input=_raw path=subject
+| spath input=_raw path=time_taken
+| spath input=_raw path=transport | search

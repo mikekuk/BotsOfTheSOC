@@ -20,6 +20,8 @@ Don't include multiple code blocks in one response. Do not ask users to copy and
 If your query does not give you what you need, revisit your assumption, collect additional information, and think of a different approach.
 When you find an answer, reply Answer: followed by the answer. Verify the answer carefully. Include verifiable evidence in your response if possible.
 
+There is a know issue with stream:smtp logs. Use marco `smtp` to access these logs.
+
 Reply with the answer and "TERMINATE" when you have the final answer. Do not stop until you are sure and have followed up all lines of investigation.
 """
 

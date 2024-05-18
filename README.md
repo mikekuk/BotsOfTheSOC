@@ -4,7 +4,7 @@
 
 This project is aiming to created a fully autonomous system cable of solving the Splunk Boss of the SOC challenges with no human interaction. They system should be able to solve all questions if provided only with the question set.
 
-The system uses OpenAI's GPT model, AutoGen and MemGPT to create a multi agent system with RAG.
+The system uses OpenAI's GPT4 with AutoGen to create a multi agent system with RAG.
 
 ## Included files
 
@@ -16,4 +16,4 @@ The system uses OpenAI's GPT model, AutoGen and MemGPT to create a multi agent s
 ## Excluded files required for operation
 
 - OAI_CONFIG_LIST: OpenAI API keys for each model.
-- .env: Dotenv file with SPlunk credentials and OpenAI key.
+- .env: Dotenv file with Splunk credentials and OpenAI key.

@@ -1,6 +1,6 @@
 SERIES = 0
 SEED = 13
-RUN_NAME = "planning_agent"
+RUN_NAME = "GPT4o"
 TEMPERATURE = 0.4
 
 INDEX = "botsv2"
@@ -9,9 +9,9 @@ END_DATE = "08/31/2017:18:00:00"
 SPLUNK_TIME_FORMAT = '%m/%d/%Y:%H:%M:%S'
 SPLUNK_HOST="localhost"
 SPLUNK_PORT="8089"
-MAX_CHAR_RETURN = 30000 # Sets the target max number of chars to return from Splunk for log results. This only effects results that exceed the max row count.
-MAX_ROW_RETURN = 200 # Sets the max number of rows to return from Splunk
+MAX_CHAR_RETURN = 50000 # Sets the target max number of chars to return from Splunk for log results. This only effects results that exceed the max row count.
+MAX_ROW_RETURN = 500 # Sets the max number of rows to return from Splunk
 QUESTIONS = 'Questions.json'
 LOG = 'log.csv'
-MODEL = "gpt-4-1106-preview"
+MODEL = "gpt-4o"
 ROUNDS = 15

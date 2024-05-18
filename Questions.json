@@ -10,14 +10,14 @@
         {
             "Number": 101,
             "Question": "Amber found the executive contact information and sent him an email. What is the CEO's name? Provide the first and last name.",
-            "Hints": "Look for emails to Amber Turing.\n\nFind emails from aturing that were sent to the domain from question 100.\nLook at the sourcetype=stream:smtp and filter on the sender_email=aturing@froth.ly and/or receiver_email{}=aturing@froth.ly. You will need to use '| spath sender_email | spath receiver_email{}' to extract these fields. Look at the content and body of emails that have something to do with competitors. The name of the CEO should be in the email.",
+            "Hints": "Look for emails to Amber Turing.\n\nFind emails from aturing that were sent to the domain from question 100.\nLook at the sourcetype=stream:smtp and filter on the sender_email=aturing@froth.ly and/or receiver_email{}=aturing@froth.ly. Look at the content and body of emails that have something to do with competitors. The name of the CEO should be in the email.",
             "Points": 10,
             "Answer": "Martin Berk"
         },
         {
             "Number": 102,
             "Question": "After the initial contact with the CEO, Amber contacted another employee at this competitor. What is that employee's email address?",
-            "Hints": "Look at Amber's email traffic.\nFind the last email from the domain in question 100. You must use spath and specify the field name to extract fields from the data. Splunk will not do this for you.",
+            "Hints": "Look at Amber's email traffic.\nFind the last email from the domain in question 100.",
             "Points": 10,
             "Answer":"hbernhard@berkbeer.com"
         },
