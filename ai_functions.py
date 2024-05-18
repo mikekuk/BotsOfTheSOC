@@ -37,10 +37,15 @@ def markerbot(question: str, student: str, textbook: str) -> str:
 
     return get_response(system_message, string)
 
-def summarize_data(data:str) -> str:
+def summarize_data(data:str, question:str="") -> str:
     """
     Summaries data to save tokens
     """
-    system_message = "You are a helpful AI security operations assistant. Summarize this data and provide all key insights. ALWAYS include a summary of the data structure and all field names. Sum up any human readable sections in the data."
+    additional_message = ""
+    
+    if question != "":
+        additional_message = f"Include any information that may be relevant to answer the following question: {question}"
+
+    system_message = f"You are a helpful AI security operations assistant. Summarize this data and provide all key insights. ALWAYS include a summary of the data structure and all field names. Sum up any human readable sections in the data. {additional_message}"
     return get_response(system_message, data)
 

@@ -1,4 +1,5 @@
 index=botsv2 sourcetype=stream:smtp
+| spath input=_raw path=content{} output=content
 | spath input=_raw path=content_body
 | spath input=_raw path=content_transfer_encoding
 | spath input=_raw path=content_type

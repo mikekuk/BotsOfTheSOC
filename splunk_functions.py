@@ -71,7 +71,14 @@ def get_results_json(query:str, earliest_time:str = iso_start_date, latest_time:
         results_json = _results_json
         return results_json
 
-def splunk_query(query: str, earliest_time:str=iso_start_date, latest_time:str=iso_end_date) -> str:
+def splunk_query(query: str, earliest_time:str=iso_start_date, latest_time:str=iso_end_date, question:str="") -> str:
+
+    # Handel know errors in data:
+    if "sourcetype=stream:smtp" in query:
+        return "Remember there is a known error with stream:smtp. Use macro `smtp` instead."
+    if ("earliest" in query) or ("latest" in query):
+        return "Use earliest_time and latest_time arguments in the function, rather than inserting tme into the SPL."
+
 
     # Set reduced flag to track if the returned results has been redacted to save tokens.
     reduced = False
@@ -81,15 +88,15 @@ def splunk_query(query: str, earliest_time:str=iso_start_date, latest_time:str=i
         query = f'search {query}'
   
     try:
-        responce_json = get_results_json(query, earliest_time, latest_time)
-        results_json = responce_json["results"]
+        response_json = get_results_json(query, earliest_time, latest_time)
+        results_json = response_json["results"]
 
     except Exception as e:
         # General error handling
         error_msg = str(e)
         return f"The query returned an error: {error_msg}.\n {debug_query(query, error_msg)}"
-    if 'fields' in responce_json.keys():
-        fields_str = "the following fields:\n" + "\n ".join([x["name"] for x in responce_json['fields']])
+    if 'fields' in response_json.keys():
+        fields_str = "the following fields:\n" + "\n ".join([x["name"] for x in response_json['fields']])
     else:
         fields_str = "no fields found"
     results_count = len(results_json)
@@ -97,7 +104,7 @@ def splunk_query(query: str, earliest_time:str=iso_start_date, latest_time:str=i
     pipe_count = len(split_query)
 
     return_string = ""
-    empty_results_return_string = "This search returned no results. If this is unexpected, try broadening your search to explore the data."
+    empty_results_return_string = "This search returned no results. If this is unexpected, try broadening your search or use 'fieldsummary | table field' to confirm the correct field names."
 
     # Handel searches with no results and only one pipe
     if results_count == 0 and pipe_count == 1:
@@ -109,10 +116,10 @@ def splunk_query(query: str, earliest_time:str=iso_start_date, latest_time:str=i
             query = '|'.join(split_query[:-1])
             split_query = query.split('|')
             pipe_count = len(split_query)
-            responce_json = get_results_json(query, earliest_time, latest_time, count=50)
-            results_json = responce_json['results']
-            if 'fields' in responce_json.keys():
-                fields_str = "the following fields: " + "\n".join([x["name"] for x in responce_json['fields']])
+            response_json = get_results_json(query, earliest_time, latest_time, count=50)
+            results_json = response_json['results']
+            if 'fields' in response_json.keys():
+                fields_str = "the following fields: " + "\n".join([x["name"] for x in response_json['fields']])
             else:
                 fields_str = "no fields found"
             results_count = len(results_json)
@@ -134,9 +141,9 @@ def splunk_query(query: str, earliest_time:str=iso_start_date, latest_time:str=i
         results_string_len = len(results_string)
     
     # Handel long results within row limit.
-    if results_string_len > MAX_CHAR_RETURN:
+    if results_string_len > MAX_CHAR_RETURN * 2:
         reduced = True
-        while results_string_len > MAX_CHAR_RETURN and len(results_json) > 1:
+        while results_string_len > (MAX_CHAR_RETURN*2) and len(results_json) > 1:
             results_json = results_json[:-1]
             results_string = json.dumps(results_json)
             results_string_len = len(results_string)
@@ -211,6 +218,7 @@ functions = [
                     "description": f"""
                             SPL query extracting info to answer the user's question.
                             Never use time selectors in the search, instead us the earliest_time and latest_time properties to set search windows.
+
                             Splunk has the following data sourcetypes available:
                                 
                                 {sourcetypes}
@@ -223,6 +231,10 @@ functions = [
                "latest_time": {
                     "type": "string",
                     "description": "The latest time for the search. Input should be in ISO datetime format."
+                },
+                "question": {
+                    "type": "string",
+                    "description": "The original question given to be answered. This will provide context when summering long responses."
                 } 
             },
             "required": ["query"],

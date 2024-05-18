@@ -4,7 +4,7 @@ import os
 from autogen.token_count_utils import count_token
 from prompt_functions import load_questions, get_prompts, extract_answer
 from agents import groupchat, manager, user_proxy, splunker
-from config import QUESTIONS, SERIES, LOG, SEED, MODEL
+from config import QUESTIONS, SERIES, LOG, SEED, MODEL, CLEAR_HISTORY
 from ai_functions import markerbot
 
 
@@ -17,6 +17,7 @@ for i in range(len(prompts)):
     user_proxy.initiate_chat(
         manager,
         message=prompts[i],
+        clear_history=bool(i==0)
     )
 
     answer = extract_answer(splunker.last_message()["content"])
