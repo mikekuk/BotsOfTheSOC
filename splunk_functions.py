@@ -95,11 +95,15 @@ def splunk_query(query: str, earliest_time:str=iso_start_date, latest_time:str=i
         # General error handling
         error_msg = str(e)
         return f"The query returned an error: {error_msg}.\n {debug_query(query, error_msg)}"
-    if 'fields' in response_json.keys():
-        fields_str = "the following fields:\n" + "\n ".join([x["name"] for x in response_json['fields']])
+    
+
+    if len(response_json["results"]) > 0:
+        fields_str = "The search contained the following fields:\n" + "\n ".join([x['name'] for x in response_json["fields"]]) + "\n\nAnd following results:\n"
     else:
-        fields_str = "no fields found"
+        fields_str = "No fields found"
+
     results_count = len(results_json)
+
     split_query = query.split('|')
     pipe_count = len(split_query)
 
@@ -119,9 +123,9 @@ def splunk_query(query: str, earliest_time:str=iso_start_date, latest_time:str=i
             response_json = get_results_json(query, earliest_time, latest_time, count=50)
             results_json = response_json['results']
             if 'fields' in response_json.keys():
-                fields_str = "the following fields: " + "\n".join([x["name"] for x in response_json['fields']])
+                fields_str = "This search contained following fields: " + "\n".join([x['name'] for x in response_json["fields"]]) + "\n" + "\n\nAnd following results:\n"
             else:
-                fields_str = "no fields found"
+                fields_str = "No fields found\n"
             results_count = len(results_json)
 
         if results_count == 0:
@@ -143,25 +147,27 @@ def splunk_query(query: str, earliest_time:str=iso_start_date, latest_time:str=i
     # Handel long results within row limit.
     if results_string_len > MAX_CHAR_RETURN * 2:
         reduced = True
-        while results_string_len > (MAX_CHAR_RETURN*2) and len(results_json) > 1:
+        while results_string_len > (MAX_CHAR_RETURN * 2) and len(results_json) > 1:
             results_json = results_json[:-1]
             results_string = json.dumps(results_json)
             results_string_len = len(results_string)
+            
       
     # Update string
-    results_string = json.dumps(results_json)
+    results_string = json.dumps(results_string)
 
     # Handel long responses with GPT4 summarization
     if len(results_string) > MAX_CHAR_RETURN:
         _results_string = f"The data returned was over {MAX_CHAR_RETURN} characters long. It has been summarized below:\n"
-        results_string = _results_string + summarize_data(results_string)
+        results_string = _results_string + summarize_data(results_string, question=question)
 
-    # Append an explainer if the results have been reduced.
+    # # Append an explainer if the results have been reduced.
     if reduced:
         reduced_json_count = len(results_json)
-        return_string += f"This search returned {results_count} results with {fields_str}\nConsider a more refined search. Here are the first {reduced_json_count} results:\n"
+        return_string += f"This search returned {results_count} results. \nConsider a more refined search. Here are the fields and first {reduced_json_count} results:\n"
     
     # Add the final results and return.
+    # return_string += fields_str
     return_string += results_string
     return return_string
 
