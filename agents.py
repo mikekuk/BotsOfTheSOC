@@ -33,8 +33,9 @@ user_proxy = autogen.UserProxyAgent(
         "work_dir": "coding",
         "use_docker": False,  # set to True or image name like "python:3" to use docker
     },
-    llm_config=llm_config,
-    system_message=sense_checker_system_message,
+    # llm_config=llm_config,
+    # system_message=sense_checker_system_message,
+    description="A user proxy able to execute the function calls from other agents."
 )
 
 user_proxy.register_function(
@@ -45,6 +46,7 @@ user_proxy.register_function(
 splunker = autogen.AssistantAgent(
     name="Splunk_analyst",
     system_message = assistant_system_message,
+    description="An expert analyst with access to the security tools and data.",
     llm_config={
         "seed": SEED,  # seed for caching and reproducibility
         "config_list": config_list,  # a list of OpenAI API configuration
@@ -56,7 +58,8 @@ splunker = autogen.AssistantAgent(
 sense_check = autogen.AssistantAgent(
     name="sense_check",
     system_message = sense_checker_system_message,
-    llm_config=llm_config
+    llm_config=llm_config,
+    description="A sensible and rational agent that can help resolve issues. Call this if you can not getting what you need."
 )
 
 chat_agents = [

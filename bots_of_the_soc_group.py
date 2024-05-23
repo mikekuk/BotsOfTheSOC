@@ -4,7 +4,7 @@ import os
 from datetime import datetime
 from autogen.token_count_utils import count_token
 from prompt_functions import load_questions, get_prompts, extract_answer
-from agents import user_proxy, splunker
+from agents import user_proxy, splunker, manager, groupchat
 from config import QUESTIONS, SERIES, LOG, SEED, MODEL, RUN_NAME, TEMPERATURE, CLEAR_HISTORY
 from ai_functions import markerbot, get_response
 
@@ -22,8 +22,8 @@ log = f"{dir}/{LOG}"
 
 os.makedirs(dir, exist_ok=True)
 
-def assign_splunker(task:str, clear_history:bool):
-    user_proxy.initiate_chat(splunker, message=task, clear_history=clear_history)
+def assign_groupchat(task:str, clear_history:bool):
+    user_proxy.initiate_chat(manager, message=task, clear_history=clear_history)
     answer = extract_answer(splunker.last_message()["content"])
     # summary = get_response("A helpful AI assistant.", f"Summarize the key information in this investigation. Include any insights into the Splunk data and key facts that maybe useful in future investigations: {list(dict(user_proxy.chat_messages).values())[0]}")
     return f"Answer: {answer}"
@@ -36,13 +36,14 @@ if __name__ == "__main__":
         if not CLEAR_HISTORY:
             clear_history = (i == 0)
         
-        assign_splunker(prompts[i], clear_history=CLEAR_HISTORY)
+        assign_groupchat(prompts[i], clear_history=CLEAR_HISTORY)
         
         answer = extract_answer(splunker.last_message()["content"])
 
         result = markerbot(questions[i]['Question'], answer, questions[i]['Answer'])
 
-        messages = list(dict(user_proxy.chat_messages).values())[0]
+        messages = groupchat.messages
+        print(messages)
         tokens = count_token(input=messages, model=MODEL)
 
         with open(f"{dir}/Message-Seed_{SEED}-Question_{questions[i]['Number']}.json", "w") as f:

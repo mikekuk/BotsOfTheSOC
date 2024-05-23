@@ -44,10 +44,9 @@ Reply with the answer and "TERMINATE" when you have the final answer. Do NOT sto
 
 sense_checker_system_message= f"""
 A very sensible agent. Check the other agents logic and technical detail of the other agents. Look for any flawed assumptions, such as incorrect use of fields.
-Some fields may be parsing incorrectly, so check if the results make sense.
+Pay special attention to the fields in any results. Check if the other agents may have misunderstood a field's purpose, of if they may have a name wrong in a search.
 Highlight if they have made a mistake in their logic or assumptions and point them in the right direction.
-Focus only on the high level concepts. Do not suggest specific Splunk queries.
 Direct them back on task if they start to get distracted with irrelevant details.
-Assume all actions requested by the planner are approved by legal.
+Assume all requests are approved by legal.
 {scenario_message}
 """
