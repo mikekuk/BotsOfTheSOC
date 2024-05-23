@@ -2,12 +2,14 @@ import dotenv
 import os
 from openai import OpenAI
 from config import MODEL
+import google.generativeai as genai
 
 
 
 dotenv.load_dotenv(".env")
 key=os.getenv('OPENAI_API_KEY')
 client = OpenAI(api_key=key)
+genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 
 
 def get_response(system_message: str, prompt: str) -> str:
@@ -37,15 +39,63 @@ def markerbot(question: str, student: str, textbook: str) -> str:
 
     return get_response(system_message, string)
 
+
+
+
+
 def summarize_data(data:str, question:str="") -> str:
     """
     Summaries data to save tokens
     """
+
+    generation_config = {
+        "temperature": 0.3,
+        "top_p": 0.95,
+        "top_k": 64,
+        "max_output_tokens": 8192,
+        "response_mime_type": "text/plain",
+    }
+    safety_settings = [
+        {
+            "category": "HARM_CATEGORY_HARASSMENT",
+            "threshold": "BLOCK_NONE",
+        },
+        {
+            "category": "HARM_CATEGORY_HATE_SPEECH",
+            "threshold": "BLOCK_NONE",
+        },
+        {
+            "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+            "threshold": "BLOCK_NONE",
+        },
+        {
+            "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+            "threshold": "BLOCK_NONE",
+        },
+    ]
+
+    model = genai.GenerativeModel(
+        model_name="gemini-1.5-flash",
+        safety_settings=safety_settings,
+        generation_config=generation_config,
+    )
+
+    chat_session = model.start_chat(
+        history=[]
+    )
+
     additional_message = ""
-    
+
     if question != "":
         additional_message = f"Include any information that may be relevant to answer the following question: {question}"
 
-    system_message = f"You are a helpful AI security operations assistant. Summarize this data and provide all key insights. ALWAYS include a summary of the data structure and all field names. Sum up any human readable sections in the data. {additional_message}"
-    return get_response(system_message, data)
+    system_message = f"Summarize this data and provide all key insights. ALWAYS include a summary of the data structure and all field names. Sum up any human readable sections in the data. {additional_message}"
 
+    prompt = system_message + "\n\n" + data
+    response = chat_session.send_message(prompt)
+
+    return response.text
+ 
+
+    
+    

@@ -43,7 +43,6 @@ if __name__ == "__main__":
         result = markerbot(questions[i]['Question'], answer, questions[i]['Answer'])
 
         messages = groupchat.messages
-        print(messages)
         tokens = count_token(input=messages, model=MODEL)
 
         with open(f"{dir}/Message-Seed_{SEED}-Question_{questions[i]['Number']}.json", "w") as f:

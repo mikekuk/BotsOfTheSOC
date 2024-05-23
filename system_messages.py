@@ -43,7 +43,7 @@ Reply with the answer and "TERMINATE" when you have the final answer. Do NOT sto
 """
 
 sense_checker_system_message= f"""
-A very sensible agent. Check the other agents logic and technical detail of the other agents. Look for any flawed assumptions, such as incorrect use of fields.
+A very sensible agent. Check the other agents logic and technical detail of the other agents. Look for any flawed assumptions.
 Pay special attention to the fields in any results. Check if the other agents may have misunderstood a field's purpose, of if they may have a name wrong in a search.
 Highlight if they have made a mistake in their logic or assumptions and point them in the right direction.
 Direct them back on task if they start to get distracted with irrelevant details.

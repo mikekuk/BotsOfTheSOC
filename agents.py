@@ -68,5 +68,18 @@ chat_agents = [
     sense_check
 ]
 
-groupchat = autogen.GroupChat(agents=chat_agents, messages=[], max_round=ROUNDS)
+
+def custom_speaker_selection_func(last_speaker: autogen.Agent, groupchat: autogen.GroupChat):
+    messages = groupchat.messages
+
+    if last_speaker == user_proxy and "This search returned" in messages[-1]:
+        return sense_check
+    elif last_speaker == sense_check:
+        return splunker
+    elif last_speaker == splunker:
+        return user_proxy
+    else:
+        return splunker
+
+groupchat = autogen.GroupChat(agents=chat_agents, messages=[], max_round=ROUNDS, speaker_selection_method=custom_speaker_selection_func)
 manager = autogen.GroupChatManager(groupchat=groupchat, llm_config=llm_config)

@@ -158,7 +158,7 @@ def splunk_query(query: str, earliest_time:str=iso_start_date, latest_time:str=i
 
     # Handel long responses with GPT4 summarization
     if len(results_string) > MAX_CHAR_RETURN:
-        _results_string = f"The data returned was over {MAX_CHAR_RETURN} characters long. It has been summarized below:\n"
+        _results_string = f"This search returned over {MAX_CHAR_RETURN} characters long. It has been summarized below:\n"
         results_string = _results_string + summarize_data(results_string, question=question)
 
     # # Append an explainer if the results have been reduced.
