@@ -1,6 +1,7 @@
 SERIES = 0
-SEED = 5
-RUN_NAME = "GPT4o-groupchat"
+
+SEED = 6
+RUN_NAME = "GPT4o-group_3"
 TEMPERATURE = 0.1
 
 INDEX = "botsv2"

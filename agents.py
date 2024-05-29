@@ -72,7 +72,9 @@ chat_agents = [
 def custom_speaker_selection_func(last_speaker: autogen.Agent, groupchat: autogen.GroupChat):
     messages = groupchat.messages
 
-    if last_speaker == user_proxy and "This search returned" in messages[-1]:
+    if last_speaker == user_proxy and "This search returned" in messages[-1]['content']:
+        return sense_check
+    if last_speaker == user_proxy and len(messages)%3 == 0:
         return sense_check
     elif last_speaker == sense_check:
         return splunker
